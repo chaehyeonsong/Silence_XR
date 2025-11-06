@@ -30,5 +30,6 @@ public class SimpleMover : MonoBehaviour
 
         if (Input.GetKey(KeyCode.RightArrow))
             transform.Rotate(0f, 0f, -rotationSpeed * Time.deltaTime);
+        //Physics.SyncTransforms();
     }
 }
