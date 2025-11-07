@@ -4,165 +4,215 @@ public class SpiderClimbController : MonoBehaviour
 {
     private enum SpiderState
     {
-        Ground,
-        Climb
+        Ground,     // 평지 걷기
+        ClimbWall,  // 벽 타고 수직 이동 (forward = 위)
+        ClimbUp,    // 꼭대기 턱 넘기기 (위 + 안쪽 대각선 이동)
+        DropDown    // 바닥을 바라보며 낙하
     }
 
-    [Header("Movement")]
-    public float moveSpeed = 2f;
-    public float rotateSpeed = 8f;
-    public float forwardRayDistance = 1.0f;   // 앞 레이 길이
-    public float downRayDistance = 2.0f;      // 아래 레이 길이
-    public float stickDistance = 0.05f;       // 표면에서 살짝 띄우는 거리
-
-    [Header("거미가 달라붙을 표면 레이어")]
-    public LayerMask climbLayers;             // Inspector에서 Climb 체크
-
-    private Animation anim;
-
-    // 상태 관련
     private SpiderState state = SpiderState.Ground;
-    private Vector3 wallNormal;         // 지금 타고 있는 벽의 노멀
-    private Vector3 climbDir;           // 벽에서 움직일 방향 (위로)
-    private const float wallAngleThreshold = 60f; // 이 각도 이상이면 벽으로 간주
+
+    [Header("Speed")]
+    public float moveSpeed = 2f;       // 평지 이동 속도
+    public float wallClimbSpeed = 2f;  // 벽 타고 올라가는 속도
+    public float climbUpSpeed = 2f;    // 턱 넘을 때 속도 (위+안쪽)
+    public float dropSpeed = 3f;       // 떨어지는 속도
+
+    [Header("Layers")]
+    public LayerMask groundLayer;      // 평지 레이어
+    public LayerMask climbLayer;       // 벽(장애물) 레이어
+
+    [Header("Ray Settings")]
+    public float groundCheckDistance = 1.2f;   // 아래로 레이 길이
+    public float forwardCheckDistance = 0.5f;  // 앞 레이 길이
+    public float forwardRayHeight = 0.3f;      // 앞 레이 쏘는 높이
+    public float stickOffset = 0.05f;          // 표면에서 살짝 띄우는 거리
+
+    [Header("Drop Settings")]
+    public float landingCheckDistance = 0.3f;  // 착지 감지용 짧은 거리
+
+    private Vector3 wallNormal;   // 현재 붙어있는 벽의 노멀
+    private Vector3 climbDir;     // 벽면 따라 올라갈 방향 (위쪽)
+
+    // 아래로 쏠 때는 ground + climb 둘 다 "걸을 수 있는 표면" 취급
+    LayerMask WalkableMask => groundLayer | climbLayer;
 
     void Start()
     {
-        anim = GetComponent<Animation>();
-        anim.Play("walk");   // 실제 walk 클립 이름 맞춰줘
+        Debug.Log("Spider State → " + state);
     }
 
     void Update()
     {
-        Vector3 origin = transform.position + Vector3.up * 0.1f;
+        Debug.DrawRay(transform.position, Vector3.down * groundCheckDistance, Color.yellow);
+        Debug.DrawRay(transform.position + Vector3.up * forwardRayHeight, transform.forward * forwardCheckDistance, Color.red);
 
         switch (state)
         {
             case SpiderState.Ground:
-                UpdateGround(origin);
+                UpdateGround();
                 break;
-            case SpiderState.Climb:
-                UpdateClimb(origin);
+            case SpiderState.ClimbWall:
+                UpdateClimbWall();
+                break;
+            case SpiderState.ClimbUp:
+                UpdateClimbUp();
+                break;
+            case SpiderState.DropDown:
+                UpdateDropDown();
                 break;
         }
-
-        // 애니메이션은 계속 walk 유지
-        if (!anim.IsPlaying("walk"))
-            anim.CrossFade("walk", 0.15f);
-
-        // 디버그 레이
-        Debug.DrawRay(origin, transform.forward * forwardRayDistance, Color.red);
-        Debug.DrawRay(origin, Vector3.down * downRayDistance, Color.blue);
     }
 
-    // ───────────────── GROUND 상태 ─────────────────
-    void UpdateGround(Vector3 origin)
+    void SetState(SpiderState newState)
     {
-        // 1) 바닥 붙이기
-        if (Physics.Raycast(origin, Vector3.down, out RaycastHit groundHit, downRayDistance, climbLayers))
+        if (state == newState) return;
+
+        // DropDown으로 들어갈 때 한 번만 회전 세팅
+        if (newState == SpiderState.DropDown)
         {
-            // 위치 Y만 맞춰주고
-            Vector3 targetPos = groundHit.point + groundHit.normal * stickDistance;
-            transform.position = Vector3.Lerp(transform.position, targetPos, Time.deltaTime * 10f);
-
-            // 평지 회전 : Y축만 사용 (벽용 회전 절대 안 씀)
-            Vector3 flatForward = transform.forward;
-            flatForward.y = 0f;
-            if (flatForward.sqrMagnitude < 0.001f)
-                flatForward = Vector3.forward;
-            flatForward.Normalize();
-
-            Quaternion targetRot = Quaternion.LookRotation(flatForward, Vector3.up);
-            transform.rotation = Quaternion.Slerp(transform.rotation, targetRot, rotateSpeed * Time.deltaTime);
+            AlignForFall();
         }
 
-        // 2) 평지에서 계속 앞으로 이동
+        state = newState;
+        Debug.Log("Spider State → " + state);
+    }
+
+    // 떨어질 때 바닥을 바라보게 회전
+    void AlignForFall()
+    {
+        // forward(Z+)를 바닥(Down)으로
+        Vector3 fallForward = Vector3.down;
+
+        // Up축은 이전 forward의 수평 성분을 사용해서 옆으로 덜 비틀리게
+        Vector3 up = transform.forward;
+        up.y = 0f;
+        if (up.sqrMagnitude < 0.001f)
+            up = Vector3.forward; // 안전빵 기본값
+
+        up.Normalize();
+
+        transform.rotation = Quaternion.LookRotation(fallForward, up);
+    }
+
+    // 평지용 자세로 복구 (forward 수평화)
+    void AlignForGround()
+    {
+        Vector3 flatForward = transform.forward;
+        flatForward.y = 0f;
+
+        if (flatForward.sqrMagnitude < 0.001f)
+            flatForward = Vector3.forward;   // 모델이 Z+가 앞
+
+        flatForward.Normalize();
+        transform.rotation = Quaternion.LookRotation(flatForward, Vector3.up);
+    }
+
+    // ─────────────────────── 1) 평지 상태 ───────────────────────
+    void UpdateGround()
+    {
+        // 1) 먼저 발밑 바닥부터 확실히 잡고
+        if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit groundHit, groundCheckDistance, WalkableMask))
+        {
+            transform.position = groundHit.point + Vector3.up * stickOffset;
+        }
+        else
+        {
+            SetState(SpiderState.DropDown);
+            return;
+        }
+
+        // 2) 그 다음 Z+ 방향(앞)으로 이동
         transform.position += transform.forward * moveSpeed * Time.deltaTime;
 
-        // 3) 앞에 벽 있으면 → Climb 상태로 한 번 전환
-        if (Physics.Raycast(origin, transform.forward, out RaycastHit fHit, forwardRayDistance, climbLayers))
+        // 3) 앞에 벽(climbLayer) 있는지 체크
+        Vector3 forwardOrigin = transform.position + Vector3.up * forwardRayHeight;
+
+        if (Physics.Raycast(forwardOrigin, transform.forward, out RaycastHit wallHit, forwardCheckDistance, climbLayer))
         {
-            float angle = Vector3.Angle(fHit.normal, Vector3.up);
-            if (angle > wallAngleThreshold)   // 거의 수직이면 벽
+            float angle = Vector3.Angle(wallHit.normal, Vector3.up);
+
+            // 수직면(거의 90도)이면 벽으로 판정
+            if (angle > 80f)
             {
-                EnterClimb(fHit);
+                // 벽 정보 저장
+                wallNormal = wallHit.normal;
+
+                // 벽을 따라 "위로" 올라갈 방향 계산
+                climbDir = Vector3.ProjectOnPlane(Vector3.up, wallNormal).normalized;
+                if (climbDir.sqrMagnitude < 0.0001f)
+                    climbDir = Vector3.up;
+
+                if (Vector3.Dot(climbDir, Vector3.up) < 0)
+                    climbDir = -climbDir;
+
+                // forward(Z+) = climbDir(위쪽), up = wallNormal(벽 바깥)
+                transform.rotation = Quaternion.LookRotation(climbDir, wallNormal);
+
+                // 벽 표면에 딱 붙이기
+                transform.position = wallHit.point + wallNormal * stickOffset;
+
+                SetState(SpiderState.ClimbWall);
             }
         }
     }
 
-    // ───────────────── CLIMB 시작 ─────────────────
-void EnterClimb(RaycastHit hit)
-{
-    state = SpiderState.Climb;
-
-    wallNormal = hit.normal;
-
-    climbDir = Vector3.ProjectOnPlane(Vector3.up, wallNormal).normalized;
-    if (climbDir.sqrMagnitude < 0.001f)
-        climbDir = Vector3.up;
-
-    if (Vector3.Dot(climbDir, Vector3.up) < 0f)
-        climbDir = -climbDir;
-
-    // 🔥 여기 추가
-    climbDir = -climbDir;   // 그냥 아예 반대로
-
-    Quaternion climbRot = Quaternion.LookRotation(climbDir, wallNormal);
-    transform.rotation = climbRot;
-
-    Vector3 targetPos = hit.point - wallNormal * stickDistance;
-    transform.position = targetPos;
-}
-
-
-    // ───────────────── CLIMB 상태 ─────────────────
-    void UpdateClimb(Vector3 origin)
+    // ─────────────────────── 2) 벽 타기 ───────────────────────
+    void UpdateClimbWall()
     {
-        // 1) 아직도 같은 벽에 붙어있는지 확인
-        bool onWall = Physics.Raycast(origin, -wallNormal, out RaycastHit wallHit, forwardRayDistance, climbLayers);
-
-        if (!onWall)
+        // 아직도 같은 벽에 붙어있는지 확인 (-wallNormal 방향으로 짧게 레이)
+        if (Physics.Raycast(transform.position, -wallNormal, out RaycastHit hit, 1f, climbLayer))
         {
-            // 더 이상 그 벽이 없으면 → 바닥 모드로 전환 시도
-            TryExitClimbToGround(origin);
-            return;
-        }
+            // 벽 표면에 밀착
+            transform.position = hit.point + wallNormal * stickOffset;
 
-        // 2) 벽에 계속 딱 붙이기 (회전은 건드리지 않음!)
-        Vector3 targetPos = wallHit.point - wallNormal * stickDistance;
-        transform.position = Vector3.Lerp(transform.position, targetPos, Time.deltaTime * 10f);
-        // 3) 벽 "위쪽" 방향(climbDir)으로만 이동 (대각선 X)
-        transform.position += climbDir * moveSpeed * Time.deltaTime;
-        // 여기서는 rotation 안 건드림 → 올라갈 때 계속 rotate 안 함ㄹ
-    }
-
-    // ───────────────── CLIMB 종료 → GROUND 전환 ─────────────────
-    void TryExitClimbToGround(Vector3 origin)
-    {
-        // 벽에서 떨어졌을 때, 아래에 바닥 있으면 Ground로 전환
-        if (Physics.Raycast(origin, Vector3.down, out RaycastHit groundHit, downRayDistance, climbLayers))
-        {
-            // 위치
-            Vector3 targetPos = groundHit.point + groundHit.normal * stickDistance;
-            transform.position = targetPos;
-
-            // ⭐ 여기서 딱 한 번 "평지 회전" 하고,
-            Vector3 flatForward = transform.forward;
-            flatForward.y = 0f;
-            if (flatForward.sqrMagnitude < 0.001f)
-                flatForward = Vector3.forward;
-            flatForward.Normalize();
-
-            Quaternion groundRot = Quaternion.LookRotation(flatForward, Vector3.up);
-            transform.rotation = groundRot;
-
-            // 상태 전환
-            state = SpiderState.Ground;
+            // forward(Z+) = climbDir(위쪽) 으로 계속 올라감
+            transform.position += climbDir * wallClimbSpeed * Time.deltaTime;
         }
         else
         {
-            // 바닥도 없으면 그냥 떨어지게 (원하면 수정 가능)
-            transform.position += Vector3.down * moveSpeed * Time.deltaTime;
+            // 더 이상 벽이 없으면 턱 넘기 단계로
+            SetState(SpiderState.ClimbUp);
+        }
+    }
+
+    // ─────────────────────── 3) 꼭대기 턱 넘기 ───────────────────────
+    void UpdateClimbUp()
+    {
+        // "위쪽(+Y) + 큐브 안쪽(-wallNormal)" 방향으로 이동해서
+        // 큐브 위 평면 위로 자연스럽게 올라감
+        Vector3 overDir = (Vector3.up - wallNormal).normalized;
+        transform.position += overDir * climbUpSpeed * Time.deltaTime;
+
+        // 밑에 뭔가(ground 또는 climb 위면)가 생길 때까지 계속 감
+        if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit groundHit, groundCheckDistance * 3f, WalkableMask))
+        {
+            // 그 지점을 바닥으로 보고 착지
+            transform.position = groundHit.point + Vector3.up * stickOffset;
+
+            // 정상에서 forward를 수평으로 돌려놓기
+            AlignForGround();
+
+            SetState(SpiderState.Ground);
+        }
+    }
+
+    // ─────────────────────── 4) 떨어지는 상태 ───────────────────────
+    void UpdateDropDown()
+    {
+        // 1) 계속 아래로 떨어지기
+        transform.position += Vector3.down * dropSpeed * Time.deltaTime;
+
+        // 2) 발밑 "가까운" 위치에 바닥이 있는지 짧게 체크
+        if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hit, landingCheckDistance, WalkableMask))
+        {
+            // 바로 아래에 바닥이 있으면 그때만 살짝 스냅
+            transform.position = hit.point + Vector3.up * stickOffset;
+
+            // 평지용 회전으로 복구 (이제 더 이상 바닥을 안 봄)
+            AlignForGround();
+
+            SetState(SpiderState.Ground);
         }
     }
 }
