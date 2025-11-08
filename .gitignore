@@ -101,3 +101,8 @@ InitTestScene*.unity*
 
 # chaehyeon
 .vscode
+Assets/Samples/*
+Assets/XR
+Assets/XRI
+Assets/XR.meta
+Assets/XRI.meta
