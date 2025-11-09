@@ -99,11 +99,14 @@ InitTestScene*.unity*
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
 
 
-# chaehyeon
+#---------- chaehyeon---------------
 .vscode
+
+#XRI toolkit
 Assets/Samples/*
 Assets/Samples.meta
 Assets/XR
 Assets/XRI
 Assets/XR.meta
 Assets/XRI.meta
+ProjectSettings/XRSettings.asset
