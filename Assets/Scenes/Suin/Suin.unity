@@ -500,8 +500,8 @@ MonoBehaviour:
   thresholdMode: 1
   linearThresholdMM: 1
   angularThresholdDeg: 0.8
-  linearSpeedThreshMMps: 200
-  angularSpeedThreshDegps: 30
+  linearSpeedThreshMMps: 600
+  angularSpeedThreshDegps: 50
   hysteresisRatio: 0.6
   emaAlpha: 0.35
   scaleVolumeByExcess: 1
