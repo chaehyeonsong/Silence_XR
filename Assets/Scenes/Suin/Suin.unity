@@ -494,8 +494,16 @@ MonoBehaviour:
   grabVolumeScale: 1
   enableMotionSound: 1
   motionEntryName: motion
+  requireGrabbed: 1
+  motionCooldown: 0.12
+  warmupAfterSelect: 0.06
+  thresholdMode: 1
   linearThresholdMM: 1
   angularThresholdDeg: 0.8
+  linearSpeedThreshMMps: 200
+  angularSpeedThreshDegps: 30
+  hysteresisRatio: 0.6
+  emaAlpha: 0.35
   scaleVolumeByExcess: 1
   volumeSensitivity: 0.15
   maxMotionVolumeScale: 1.5
