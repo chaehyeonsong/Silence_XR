@@ -4,7 +4,6 @@
 *.mat merge=unityyamlmerge
 *.anim merge=unityyamlmerge
 *.asset merge=unityyamlmerge
-
 # 바이너리는 LFS + 잠금
 *.fbx filter=lfs diff=lfs merge=lfs -text lockable
 *.png filter=lfs diff=lfs merge=lfs -text
@@ -14,7 +13,6 @@
 *.wav filter=lfs diff=lfs merge=lfs -text lockable
 *.mp3 filter=lfs diff=lfs merge=lfs -text
 *.mp4 filter=lfs diff=lfs merge=lfs -text
-
 # 줄바꿈 고정(플랫폼 섞일 때 안정성)
 *.cs text=auto eol=lf
 *.shader text=auto eol=lf
