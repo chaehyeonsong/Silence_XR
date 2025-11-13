@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.Audio;
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 public class suin_SoundManager : MonoBehaviour
 {
@@ -27,21 +28,28 @@ public class suin_SoundManager : MonoBehaviour
     public float pitch = 1.0f;
     public float pitchJitter = 0.0f;
 
+    // key -> clip
     private Dictionary<string, AudioClip> _map;
+    // key -> last played time
     private Dictionary<string, float> _lastPlay;
+    // key -> how many currently playing
     private Dictionary<string, int> _playingCount;
 
-    // 🔹 보이스 구조체 및 풀
+    // 🔸 random:prefix 그룹 독점 재생 지원
+    // prefix -> how many currently playing in the group
+    private Dictionary<string, int> _playingGroupCount;
+    // (원하면 group 쿨다운도 추가 가능) prefix -> last play time
+    private Dictionary<string, float> _lastPlayGroup;
+
     private class Voice
     {
         public AudioSource src;
-        public float freeAt; // 언제 다시 쓸 수 있는지
+        public float freeAt;
     }
     private List<Voice> _voices;
 
-    // 🔹 플래그 정의 (API 변경 없이 minCooldown에 약속)
     private const float FLAG_IGNORE_IF_PLAYING = -1f; // 기본값: 재생 중이면 무시
-    private const float FLAG_ALLOW_OVERLAP = -2f;     // 재생 중이어도 겹쳐 재생
+    private const float FLAG_ALLOW_OVERLAP     = -2f; // 재생 중이어도 겹쳐 재생
 
     void Awake()
     {
@@ -49,15 +57,14 @@ public class suin_SoundManager : MonoBehaviour
         instance = this;
         DontDestroyOnLoad(gameObject);
 
-        _map = new Dictionary<string, AudioClip>();
-        foreach (var nc in clips)
-            if (nc != null && nc.clip && !string.IsNullOrEmpty(nc.key))
-                _map[nc.key] = nc.clip;
+        BuildMapFromClips();
 
         _lastPlay = new Dictionary<string, float>();
         _playingCount = new Dictionary<string, int>();
 
-        // 🔹 보이스 풀 초기화
+        _playingGroupCount = new Dictionary<string, int>();
+        _lastPlayGroup = new Dictionary<string, float>();
+
         _voices = new List<Voice>(poolSize);
         for (int i = 0; i < poolSize; i++)
         {
@@ -69,6 +76,25 @@ public class suin_SoundManager : MonoBehaviour
             src.maxDistance = maxDistance;
             src.rolloffMode = rolloff;
             _voices.Add(new Voice { src = src, freeAt = 0f });
+        }
+    }
+
+#if UNITY_EDITOR
+    void OnValidate()
+    {
+        if (Application.isPlaying) return;
+        BuildMapFromClips();
+    }
+#endif
+
+    private void BuildMapFromClips()
+    {
+        if (_map == null) _map = new Dictionary<string, AudioClip>();
+        _map.Clear();
+        foreach (var nc in clips)
+        {
+            if (nc != null && nc.clip && !string.IsNullOrEmpty(nc.key))
+                _map[nc.key] = nc.clip;
         }
     }
 
@@ -96,11 +122,33 @@ public class suin_SoundManager : MonoBehaviour
 
     private bool PlayInternal(string key, Transform srcTransform, Vector3 pos, float volScale, float minCooldown, Mode mode)
     {
-        if (!_map.TryGetValue(key, out var clip) || !clip) return false;
+        string groupPrefix = null;
+
+        // ✅ random:prefix → prefix 그룹 독점 재생
+        if (!string.IsNullOrEmpty(key) && key.StartsWith("random:"))
+        {
+            groupPrefix = key.Substring("random:".Length);
+
+            // 현재 그룹이 재생 중이면 전체 차단
+            if (!string.IsNullOrEmpty(groupPrefix) &&
+                _playingGroupCount.TryGetValue(groupPrefix, out int gcnt) && gcnt > 0)
+            {
+                return false;
+            }
+
+            // 후보 수집 (prefix로 시작)
+            if (_map == null || _map.Count == 0) return false;
+            var candidates = _map.Keys.Where(k => k.StartsWith(groupPrefix)).ToList();
+            if (candidates.Count == 0) return false;
+
+            key = candidates[Random.Range(0, candidates.Count)];
+        }
+
+        if (_map == null || !_map.TryGetValue(key, out var clip) || !clip) return false;
 
         float now = Time.unscaledTime;
 
-        // 🔸 (1) 재생 제어 정책
+        // 🔸 (1) 재생 제어 정책 (키 단위)
         if (minCooldown == FLAG_ALLOW_OVERLAP)
         {
             // 겹쳐 재생 허용
@@ -120,13 +168,20 @@ public class suin_SoundManager : MonoBehaviour
             if (_lastPlay.TryGetValue(key, out float t3) && (now - t3) < defaultCooldown) return false;
         }
 
+        // 🔹 그룹 독점 재생 진입 (random prefix일 때만)
+        if (!string.IsNullOrEmpty(groupPrefix))
+        {
+            if (!_playingGroupCount.ContainsKey(groupPrefix)) _playingGroupCount[groupPrefix] = 0;
+            _playingGroupCount[groupPrefix]++; // 잠금
+            _lastPlayGroup[groupPrefix] = now;
+        }
+
         _lastPlay[key] = now;
 
         float v = Mathf.Clamp01(volume * volScale + Random.Range(-volumeJitter, volumeJitter));
         float p = Mathf.Clamp(pitch + Random.Range(-pitchJitter, pitchJitter), 0.1f, 3f);
         float dur = Mathf.Max(0.01f, clip.length / Mathf.Abs(p));
 
-        // 🔹 재생 카운트 갱신
         if (!_playingCount.ContainsKey(key)) _playingCount[key] = 0;
         _playingCount[key]++;
 
@@ -144,13 +199,23 @@ public class suin_SoundManager : MonoBehaviour
             temp.pitch = p;
             temp.Play();
 
-            StartCoroutine(FinishAfter(key, dur, temp));
+            StartCoroutine(FinishAfter(key, groupPrefix, dur, temp));
             return true;
         }
         else
         {
             var voice = AcquireVoice(now, dur, stealOldestIfNone: true);
-            if (voice == null) { _playingCount[key]--; return false; }
+            if (voice == null)
+            {
+                _playingCount[key]--;
+                if (!string.IsNullOrEmpty(groupPrefix))
+                {
+                    // 보이스 부족으로 실패 → 그룹 잠금 해제
+                    _playingGroupCount[groupPrefix] = Mathf.Max(0, _playingGroupCount[groupPrefix] - 1);
+                    if (_playingGroupCount[groupPrefix] == 0) _playingGroupCount.Remove(groupPrefix);
+                }
+                return false;
+            }
 
             var src = voice.src;
             src.outputAudioMixerGroup = outputMixerGroup;
@@ -168,12 +233,11 @@ public class suin_SoundManager : MonoBehaviour
 
             voice.freeAt = now + dur;
 
-            StartCoroutine(FinishAfter(key, dur, null));
+            StartCoroutine(FinishAfter(key, groupPrefix, dur, null));
             return true;
         }
     }
 
-    // 🔸 (3) 보이스 할당 로직
     private Voice AcquireVoice(float now, float dur, bool stealOldestIfNone)
     {
         Voice best = null;
@@ -181,19 +245,17 @@ public class suin_SoundManager : MonoBehaviour
 
         foreach (var v in _voices)
         {
-            if (now >= v.freeAt) return v; // 바로 사용 가능
+            if (now >= v.freeAt) return v;
             if (v.freeAt < earliest)
             {
                 earliest = v.freeAt;
                 best = v;
             }
         }
-        // 모두 재생 중이면 가장 오래된 보이스 스틸
         return stealOldestIfNone ? best : null;
     }
 
-    // 🔸 (4) 종료 처리
-    private IEnumerator FinishAfter(string key, float delay, AudioSource tempToDestroy)
+    private IEnumerator FinishAfter(string key, string groupPrefix, float delay, AudioSource tempToDestroy)
     {
         yield return new WaitForSecondsRealtime(delay);
 
@@ -202,6 +264,14 @@ public class suin_SoundManager : MonoBehaviour
             cnt = Mathf.Max(0, cnt - 1);
             if (cnt == 0) _playingCount.Remove(key);
             else _playingCount[key] = cnt;
+        }
+
+        if (!string.IsNullOrEmpty(groupPrefix) &&
+            _playingGroupCount.TryGetValue(groupPrefix, out int gcnt))
+        {
+            gcnt = Mathf.Max(0, gcnt - 1);
+            if (gcnt == 0) _playingGroupCount.Remove(groupPrefix);
+            else _playingGroupCount[groupPrefix] = gcnt;
         }
 
         if (tempToDestroy != null) Destroy(tempToDestroy);
