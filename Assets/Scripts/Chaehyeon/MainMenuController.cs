@@ -2,6 +2,7 @@ using UnityEngine;
 using UnityEngine.UI;
 using UnityEngine.SceneManagement;
 using UnityEngine.Video;
+using UnityEngine.InputSystem;
 using TMPro;
 
 public class MainMenuController : MonoBehaviour
@@ -22,6 +23,9 @@ public class MainMenuController : MonoBehaviour
     [Header("Opening Video")]
     [SerializeField] private VideoPlayer openingVideo;  // 오프닝 영상 VideoPlayer
     [SerializeField] private GameObject openingCanvas;  // 오프닝 영상이 올라간 Canvas (검은 배경 + RawImage)
+
+    [Header("Skip Input (XRI)")]
+    [SerializeField] private InputActionReference skipAction;  // XRI Input Actions에서 드래그해서 연결
 
     [Header("Scene")]
     [SerializeField] private string gameSceneName = "Level_opening2"; // 실제 씬 명으로 변경
@@ -55,6 +59,43 @@ public class MainMenuController : MonoBehaviour
             // 오프닝 영상이 없으면 바로 메인 메뉴 + BGM
             ShowMainMenuAndPlayBgm();
         }
+    }
+
+    private void OnEnable()
+    {
+        if (skipAction != null && skipAction.action != null)
+        {
+            skipAction.action.performed += OnSkipPerformed;
+            skipAction.action.Enable();
+        }
+    }
+
+    private void OnDisable()
+    {
+        if (skipAction != null && skipAction.action != null)
+        {
+            skipAction.action.performed -= OnSkipPerformed;
+            skipAction.action.Disable();
+        }
+    }
+
+    private void OnSkipPerformed(InputAction.CallbackContext ctx)
+    {
+        SkipOpening();
+    }
+
+    public void SkipOpening()
+    {
+        if (openingVideo != null && openingVideo.isPlaying)
+        {
+            openingVideo.Stop();
+            openingVideo.loopPointReached -= OnOpeningFinished;
+        }
+
+        if (openingCanvas != null)
+            openingCanvas.SetActive(false);
+
+        ShowMainMenuAndPlayBgm();
     }
 
     private void OnDestroy()
