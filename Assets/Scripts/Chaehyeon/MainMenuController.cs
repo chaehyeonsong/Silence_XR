@@ -16,7 +16,7 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private AudioSource bgm;
 
     [Header("Scene")]
-    [SerializeField] private string gameSceneName = "Level_opening"; // 실제 씬 명으로 변경
+    [SerializeField] private string gameSceneName = "Level_opening2"; // 실제 씬 명으로 변경
 
     private void Awake()
     {

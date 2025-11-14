@@ -103,10 +103,10 @@ InitTestScene*.unity*
 .vscode
 
 #XRI toolkit
-Assets/Samples/*
-Assets/Samples.meta
-Assets/XR
-Assets/XRI
-Assets/XR.meta
-Assets/XRI.meta
-ProjectSettings/XRSettings.asset
+# Assets/Samples/*
+# Assets/Samples.meta
+# Assets/XR
+# Assets/XRI
+# Assets/XR.meta
+# Assets/XRI.meta
+# ProjectSettings/XRSettings.asset
