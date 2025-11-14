@@ -1,0 +1,87 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1 &328711898373780737
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 328711898373780739}
+  - component: {fileID: 328711898373780736}
+  - component: {fileID: 328711898373780738}
+  m_Layer: 0
+  m_Name: ControllerMovementTracker
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!4 &328711898373780739
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 328711898373780737}
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_RootOrder: 0
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &328711898373780736
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 328711898373780737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 05d22c222a325d041bc05385ff990f22, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  sourceSet: 2
+  xrOrigin: {fileID: 0}
+  controllerOverride: {fileID: 0}
+  xriController: {fileID: 0}
+  xriInteractor: {fileID: 0}
+  sourceMode: 3
+  handedness: 1
+  leftOverride: {fileID: 0}
+  rightOverride: {fileID: 0}
+  headOverride: {fileID: 0}
+  showDebugLogs: 1
+--- !u!114 &328711898373780738
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 328711898373780737}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 7192c1b29dd395a49b3b7ba7d9d95530, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  tracker: {fileID: 0}
+  soundKey: random:moving-cloth
+  baseVolume: 0.41
+  cooldown: 0.15
+  maxVolumeScale: 1.6
+  jerkVolumeWeight: 0.7
+  speedVolumeWeight: 0.5
+  jerkUpper: 800
+  jerkHysRatio: 0.6
+  speedMin: 0.6
+  speedMax: 1
+  speedHysRatio: 0.85
+  posDeadzoneMM: 0.6
+  warmupAfterResolve: 0.06
+  alphaVel: 0.35
+  alphaAcc: 0.35
+  showDebug: 0
