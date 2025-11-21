@@ -13,44 +13,67 @@ public class GameOverController : MonoBehaviour
     public GameObject gameOverUI;
     public float armMoveDuration = 1.2f;
 
+    bool running = false; // flag to prevent multiple triggers
 
     public void TriggerGameOver()
     {
-        StartCoroutine(GameOverSequence());
+        if (!running)
+            StartCoroutine(GameOverSequence());
+    }
+
+    // turn off gameover rig
+    public void HideGameOverRig()
+    {
+        running = false;
+
+        if (gameOverRig)
+            gameOverRig.SetActive(false);
+
+        if (gameOverUI)
+            gameOverUI.SetActive(false);
     }
 
     IEnumerator GameOverSequence()
     {
+        running = true;
 
         // turn on rig
         gameOverRig.SetActive(true);
 
-        // initialise positions
+        if (gameOverRig)
+            gameOverRig.SetActive(true);
+
+        if (gameOverUI)
+            gameOverUI.SetActive(false);
+
+        // Reset arms to starting points
         leftArm.localPosition  = leftStartLocalPos;
         rightArm.localPosition = rightStartLocalPos;
-        gameOverUI.SetActive(false);
 
-        // move arms in
+        // Slide arms inward
         float t = 0f;
         while (t < armMoveDuration)
         {
             t += Time.deltaTime;
             float k = Mathf.Clamp01(t / armMoveDuration);
+
             leftArm.localPosition  = Vector3.Lerp(leftStartLocalPos,  leftEndLocalPos,  k);
             rightArm.localPosition = Vector3.Lerp(rightStartLocalPos, rightEndLocalPos, k);
+            
             yield return null;
         }
 
+        // After arms are closed → show UI
+        if (gameOverUI)
+            gameOverUI.SetActive(true);
 
-        gameOverUI.SetActive(true);
+        running = false;
     }
 
+    // Called by Play Again button
     public void OnPlayAgain()
     {
-        // however you restart – reload scene or tell GameManager to go back to Playing
-        UnityEngine.SceneManagement.SceneManager.LoadScene(
-            UnityEngine.SceneManagement.SceneManager.GetActiveScene().buildIndex
-        );
+        GameManager.Instance.BackToOpening();
     }
 
     void Update()

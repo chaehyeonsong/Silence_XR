@@ -1,66 +1,67 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using UnityEngine;
 using UnityEngine.SceneManagement;
-
-public enum GameState
-{
-    Opening,
-    Playing,
-    GameOver,
-    Cleared
-}
 
 public class GameManager : MonoBehaviour
 {
     public static GameManager Instance { get; private set; }
 
+    public enum GameState
+    {
+        Opening,
+        Playing,
+        GameOver
+    }
+
     public GameState CurrentState { get; private set; }
 
-    private void Awake()
+    [Header("UI / Rigs")]
+    public GameObject openingCanvas;          // Opening UI Canvas
+    public GameOverController gameOverCtrl;   // Game over arms + UI controller
+
+    void Awake()
     {
-        if (Instance == null)
-        {
-            Instance = this;
-            DontDestroyOnLoad(gameObject); // stay across scene loads
-        }
-        else
+        if (Instance != null && Instance != this)
         {
             Destroy(gameObject);
+            return;
         }
+        Instance = this;
     }
 
-    private void Start()
+    void Start()
     {
-        // Start wherever you want
-        SetState(GameState.Playing);
+        SetState(GameState.Opening);
     }
 
-    public void SetState(GameState newState)
+    // ---- Public Actions ----
+    public void StartGame()        => SetState(GameState.Playing);
+    public void TriggerGameOver()  => SetState(GameState.GameOver);
+    public void BackToOpening()    => SetState(GameState.Opening);
+
+    // ---- State Machine ----
+    void SetState(GameState newState)
     {
         CurrentState = newState;
+        Debug.Log("Game State → " + newState);
 
         switch (newState)
         {
             case GameState.Opening:
-                SceneManager.LoadScene("OpeningScene");
+                if (openingCanvas) openingCanvas.SetActive(true);
+                if (gameOverCtrl)  gameOverCtrl.HideGameOverRig();
                 break;
 
             case GameState.Playing:
-                SceneManager.LoadScene("Level_Background_with_Whatever");
+                if (openingCanvas) openingCanvas.SetActive(false);
+                if (gameOverCtrl)  gameOverCtrl.HideGameOverRig();
                 break;
 
             case GameState.GameOver:
-                SceneManager.LoadScene("Level_Closing");
-                break;
-
-            case GameState.Cleared:
-                SceneManager.LoadScene("ClearScene");
+                if (openingCanvas) openingCanvas.SetActive(false);
+                if (gameOverCtrl)  gameOverCtrl.TriggerGameOver();
                 break;
         }
     }
-
-    public void TriggerGameOver()  => SetState(GameState.GameOver);
-    public void TriggerGameClear() => SetState(GameState.Cleared);
 }
