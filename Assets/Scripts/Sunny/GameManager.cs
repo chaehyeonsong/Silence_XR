@@ -11,7 +11,8 @@ public class GameManager : MonoBehaviour
     {
         Opening,
         Playing,
-        GameOver
+        GameOver,
+        GameClear
     }
 
     public GameState CurrentState { get; private set; }
