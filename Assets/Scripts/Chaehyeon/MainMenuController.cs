@@ -32,6 +32,8 @@ public class MainMenuController : MonoBehaviour
 
     private void Awake()
     {
+        // Debug.Log("MainMenuController Awake");
+
         if (panelAbout != null)
             panelAbout.SetActive(false);
 
@@ -42,9 +44,9 @@ public class MainMenuController : MonoBehaviour
             if (openingCanvas != null)
                 openingCanvas.SetActive(true);
 
-            // 메인 메뉴는 숨겨두기
-            if (mainMenuRoot != null)
-                mainMenuRoot.SetActive(false);
+            // // 메인 메뉴는 숨겨두기
+            // if (mainMenuRoot != null)
+            //     mainMenuRoot.SetActive(false);
 
             // 혹시 BGM이 이미 재생 중이면 끄기
             if (bgm != null && bgm.isPlaying)
@@ -63,8 +65,10 @@ public class MainMenuController : MonoBehaviour
 
     private void OnEnable()
     {
+        // Debug.Log("MainMenuController OnEnable");
         if (skipAction != null && skipAction.action != null)
         {
+            // Debug.Log("Skip butten is clicked");
             skipAction.action.performed += OnSkipPerformed;
             skipAction.action.Enable();
         }
@@ -72,6 +76,7 @@ public class MainMenuController : MonoBehaviour
 
     private void OnDisable()
     {
+        // Debug.Log("MainMenuController OnDisable");
         if (skipAction != null && skipAction.action != null)
         {
             skipAction.action.performed -= OnSkipPerformed;
