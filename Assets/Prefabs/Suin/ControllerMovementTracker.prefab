@@ -75,13 +75,14 @@ MonoBehaviour:
   maxVolumeScale: 1.6
   jerkVolumeWeight: 0.7
   speedVolumeWeight: 0.5
-  jerkUpper: 800
+  jerkUpper: 300
   jerkHysRatio: 0.6
-  speedMin: 0.6
+  slight_flag_threshold: 0.01
+  speedMin: 0.2
   speedMax: 1
   speedHysRatio: 0.85
   posDeadzoneMM: 0.6
   warmupAfterResolve: 0.06
-  alphaVel: 0.35
-  alphaAcc: 0.35
-  showDebug: 0
+  alphaVel: 0.5
+  alphaAcc: 0.5
+  showDebug: 1
