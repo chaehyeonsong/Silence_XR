@@ -26,6 +26,8 @@ public class suin_ControllerAccelSound : MonoBehaviour
     [Range(0f, 1f)] public float jerkHysRatio = 0.6f; // 하한 = 상한 * ratio
 
     [Header("Speed Band Gate (m/s)")]
+    [Tooltip("move slight flag threshold")]
+    public float slight_flag_threshold = 0.005f;
     [Tooltip("속도 밴드 하한(이상)")]
     public float speedMin = 0.08f;
     [Tooltip("속도 밴드 상한(이하). 0 or 음수면 상한 무시")]
@@ -139,6 +141,11 @@ public class suin_ControllerAccelSound : MonoBehaviour
             // --- 속도 크기 ---
             float speed = velSmooth.magnitude;
 
+            if (speed > slight_flag_threshold) // TODO : finetune
+            {
+                suin_FlagHub.instance.SetMoveSlightFlag(true);
+            }
+
             // ===== JERK 히스테리시스 =====
             float jerkLower = jerkUpper * Mathf.Clamp01(jerkHysRatio);
             if (jerkMag >= jerkUpper) _jerkLoud[i] = true;
@@ -164,6 +171,7 @@ public class suin_ControllerAccelSound : MonoBehaviour
                 float vol = ComputeVolume(jerkMag, jerkUpper, speed, speedMin, speedMax);
                 if (suin_SoundManager.instance.PlayAtSource(soundKey, t, vol, -1f))
                 {
+                    suin_FlagHub.instance.SetPlayerSoundFlag(true);
                     _lastPlay[i] = Time.time;
                     if (showDebug)
                         Debug.Log($"[AccelSound] {t.name} jerk={jerkMag:F1} speed={speed:F2} vol={vol:F2}");

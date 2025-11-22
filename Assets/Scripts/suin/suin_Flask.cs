@@ -190,6 +190,7 @@ public class suin_Flask : MonoBehaviour
 
             if (reactive.TryPlayByName(motionEntryName, volScale))
             {
+                suin_FlagHub.instance.SetWaterSoundFlag(true);
                 _lastPlayTime = Time.time;
                 if (showDebug)
                 {
