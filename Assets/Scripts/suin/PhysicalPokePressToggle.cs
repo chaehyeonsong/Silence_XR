@@ -64,6 +64,9 @@ public class PhysicalPokePressToggle : MonoBehaviour
     {
         // 1) Light 토글
         if (targetLight) targetLight.enabled = _isOn;
+        
+        if (suin_FlagHub.instance != null)
+            suin_FlagHub.instance.SetLightState(_isOn);
 
         // 2) Emission 토글
         if (lampRenderer)
