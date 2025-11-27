@@ -12,9 +12,15 @@ public class SpiderClimbController : MonoBehaviour
 
     private SpiderState state = SpiderState.Ground;
 
+    [Header("Start Mode")]
+    public bool startOnCeiling = true;   // 천장에서 시작할지 여부
+
     [Header("Path Settings")]
-    public bool usePath = false;   // A 방향으로만 이동
-    public Transform pointA;       // 이동 방향 기준점
+    public bool usePath = false;         // pointA 방향으로만 이동할지
+    public Transform pointA;             // 이동 방향 기준점
+
+    [Header("Target")]
+    public Transform targetPoint;        // 스파이더가 향할 타겟
 
     [Header("Speed")]
     public float moveSpeed = 2f;
@@ -42,8 +48,7 @@ public class SpiderClimbController : MonoBehaviour
 
     void Start()
     {
-        Debug.Log("Spider State → " + state);
-
+        // 시작 방향 설정
         if (usePath && pointA != null)
         {
             Vector3 dir = pointA.position - transform.position;
@@ -51,6 +56,23 @@ public class SpiderClimbController : MonoBehaviour
             if (dir.sqrMagnitude > 0.001f)
                 transform.rotation = Quaternion.LookRotation(dir.normalized, Vector3.up);
         }
+        else if (!usePath && targetPoint != null)
+        {
+            UpdateMoveDirToTarget();
+        }
+
+        // 천장에서 시작하는 경우: 위로 레이 쏴서 천장에 붙이기
+        if (startOnCeiling)
+        {
+            AttachToCeiling();
+            state = SpiderState.DropDown;    // 천장에 붙은 상태에서 떨어지기 시작
+        }
+        else
+        {
+            state = SpiderState.Ground;
+        }
+
+        Debug.Log("Spider State → " + state);
     }
 
     void Update()
@@ -99,6 +121,14 @@ public class SpiderClimbController : MonoBehaviour
 
     void AlignForGround()
     {
+        // 타겟이 있으면 타겟 방향으로 정렬
+        if (targetPoint != null)
+        {
+            UpdateMoveDirToTarget();
+            return;
+        }
+
+        // 타겟 없으면 그냥 평면 방향으로
         Vector3 flatForward = transform.forward;
         flatForward.y = 0f;
         if (flatForward.sqrMagnitude < 0.001f)
@@ -107,9 +137,40 @@ public class SpiderClimbController : MonoBehaviour
         transform.rotation = Quaternion.LookRotation(flatForward, Vector3.up);
     }
 
+    // ─────────────────────────── 천장 붙이기 ───────────────────────────
+    void AttachToCeiling()
+    {
+        // 현재 위치에서 위로 레이를 쏴서 천장(climbLayer)을 찾음
+        if (Physics.Raycast(transform.position, Vector3.up, out RaycastHit hit, groundCheckDistance, climbLayer))
+        {
+            // 천장 표면으로 스냅
+            transform.position = hit.point + hit.normal * stickOffset;
+
+            // 천장 평면에서의 forward 기준 방향
+            Vector3 forwardOnPlane = Vector3.ProjectOnPlane(transform.forward, hit.normal);
+            if (forwardOnPlane.sqrMagnitude < 0.001f)
+            {
+                forwardOnPlane = Vector3.Cross(hit.normal, Vector3.right);
+            }
+            forwardOnPlane.Normalize();
+
+            // 스파이더의 "등"이 천장에 닿도록 up = -normal
+            transform.rotation = Quaternion.LookRotation(forwardOnPlane, -hit.normal);
+
+            Debug.Log("🕷️ Attached to ceiling at: " + hit.point);
+        }
+        else
+        {
+            // 위에 천장을 못 찾으면 그냥 뒤집어서 시작
+            transform.rotation = Quaternion.LookRotation(transform.forward, -Vector3.up);
+            Debug.LogWarning("⚠️ No ceiling found above spider. Just flipped 180°.");
+        }
+    }
+
     // ─────────────────────────── 평지 이동 ───────────────────────────
     void UpdateGround()
     {
+        // 발 아래 땅에 붙이기
         if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit groundHit, groundCheckDistance, WalkableMask))
             transform.position = groundHit.point + Vector3.up * stickOffset;
         else
@@ -118,8 +179,16 @@ public class SpiderClimbController : MonoBehaviour
             return;
         }
 
+        // 타겟이 있으면 매 프레임 타겟 방향으로 회전
+        if (!usePath && targetPoint != null)
+        {
+            UpdateMoveDirToTarget();
+        }
+
+        // 앞으로 전진
         transform.position += transform.forward * moveSpeed * Time.deltaTime;
 
+        // 벽 감지해서 타기 시작
         if (TryDetectWall(out RaycastHit wallHit))
         {
             float wallAngle = Vector3.Angle(wallHit.normal, Vector3.up);
@@ -181,7 +250,7 @@ public class SpiderClimbController : MonoBehaviour
         }
     }
 
-    // ─────────────────────────── 벽 감지 로직 ───────────────────────────
+    // ─────────────────────────── 벽 감지 ───────────────────────────
     bool TryDetectWall(out RaycastHit wallHit)
     {
         Vector3 origin = transform.position + Vector3.up * forwardRayHeight;
@@ -194,12 +263,32 @@ public class SpiderClimbController : MonoBehaviour
 
         foreach (var dir in dirs)
         {
-            // SphereCast로 감지 범위를 약간 늘림 (비스듬히 접근 보정)
             if (Physics.SphereCast(origin, 0.2f, dir, out wallHit, forwardCheckDistance, climbLayer))
                 return true;
         }
 
         wallHit = default;
         return false;
+    }
+
+    // ─────────────────────────── 타겟 방향 정렬 ───────────────────────────
+    void UpdateMoveDirToTarget()
+    {
+        if (targetPoint == null) return;
+
+        Vector3 dir = targetPoint.position - transform.position;
+        dir.y = 0f;
+
+        if (dir.sqrMagnitude < 0.001f) return;
+
+        dir.Normalize();
+        transform.rotation = Quaternion.LookRotation(dir, Vector3.up);
+    }
+
+    // Spawner에서 호출할 메서드
+    public void SetTarget(Transform target)
+    {
+        targetPoint = target;
+        UpdateMoveDirToTarget();
     }
 }

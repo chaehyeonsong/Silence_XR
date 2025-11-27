@@ -201,46 +201,76 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
     // ───────────────────────────────────────────────────────────────
     // 4) Drop: Z축 180 → X축 90을 부드럽게 회전하며 낙하 + 흰 줄 연출
     // ───────────────────────────────────────────────────────────────
-    void DropDown()
+   // ───────────────────────────────────────────────────────────────
+// 4) Drop: Z축 180 → X축 90을 부드럽게 회전하며 낙하 + 흰 줄 연출
+// ───────────────────────────────────────────────────────────────
+void DropDown()
+{
+    // 이번 프레임에 떨어질 거리
+    float step = dropSpeed * Time.deltaTime;
+
+    // 1) 회전 로직 (원래 있던 거 그대로, 단 여기서는 위치는 안 움직임)
+    if (isDropRotating)
     {
-        // 1) 회전 중이면 부드럽게 회전하면서 떨어짐
-        if (isDropRotating)
+        dropRotateTimer += Time.deltaTime;
+        float t = Mathf.Clamp01(dropRotateTimer / dropRotateDuration);
+
+        transform.rotation = Quaternion.Slerp(dropStartRot, dropTargetRot, t);
+
+        if (t >= 1f)
         {
-            dropRotateTimer += Time.deltaTime;
-            float t = Mathf.Clamp01(dropRotateTimer / dropRotateDuration);
-
-            transform.rotation = Quaternion.Slerp(dropStartRot, dropTargetRot, t);
-
-            // 회전 중에도 천천히 아래로 떨어지게
-            transform.position += Vector3.down * dropSpeed * Time.deltaTime;
-
-            if (t >= 1f)
-            {
-                isDropRotating = false; // 회전 완료
-            }
+            isDropRotating = false; // 회전 완료
         }
-        else
-        {
-            // 회전이 끝난 후에는 그냥 떨어지기
-            transform.position += Vector3.down * dropSpeed * Time.deltaTime;
-        }
+    }
 
-        // ☆ 거미줄(흰 줄) 업데이트
+    // 2) 이번 프레임에 바닥을 만나는지 먼저 Ray로 체크
+    //    시작점을 약간 위로 올려서 바닥 살짝 뚫린 상태에서도 감지되게 함
+    Vector3 rayOrigin = transform.position + Vector3.up * groundCheckDistance;
+    float rayLength = step + groundCheckDistance * 2f;
+
+    if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, rayLength, groundLayer))
+    {
+        // ✅ 이번 프레임 안에 바닥을 만난 경우 → 그 위치에 스냅하고 착지 처리
+        transform.position = hit.point + Vector3.up * groundStickOffset;
+
         if (isWebActive && webLine != null)
         {
-            webLine.SetPosition(0, webStartPos);          // 위쪽 고정 점
-            webLine.SetPosition(1, transform.position);   // 현재 거미 위치
+            webLine.SetPosition(0, webStartPos);
+            webLine.SetPosition(1, transform.position);
         }
 
-        // 바닥 착지 체크
-        if (Physics.Raycast(transform.position, Vector3.down, out RaycastHit hit, groundCheckDistance, groundLayer))
-        {
-            transform.position = hit.point + Vector3.up * groundStickOffset;
-            state = SpiderState.Land;
+        state = SpiderState.Land;
+        return;
+    }
 
-            // 착지 후 줄 처리 (남겨두고 싶으면 이 부분 주석 처리)
-            // webLine.enabled = false;
-            // isWebActive = false;
+    // 3) 바닥 안 만났으면 그냥 아래로 이동
+    transform.position += Vector3.down * step;
+
+    // ☆ 거미줄(흰 줄) 업데이트
+    if (isWebActive && webLine != null)
+    {
+        webLine.SetPosition(0, webStartPos);        // 위쪽 고정 점
+        webLine.SetPosition(1, transform.position); // 현재 거미 위치
+    }
+}
+
+
+    // ───────────────────────────────────────────────────────────────
+    // 5) Spawner에서 타겟을 주입하기 위한 메서드
+    // ───────────────────────────────────────────────────────────────
+    public void SetTarget(Transform target)
+    {
+        targetPoint = target;
+        // 바로 방향 맞추고 싶으면 천장 이동 시작 전에 한 번 회전
+        if (targetPoint != null && state == SpiderState.CeilingMove)
+        {
+            Vector3 dir = targetPoint.position - transform.position;
+            dir.y = 0f;
+            if (dir.sqrMagnitude > 0.001f)
+            {
+                dir.Normalize();
+                transform.rotation = Quaternion.LookRotation(dir, fixedCeilingNormal);
+            }
         }
     }
 }
