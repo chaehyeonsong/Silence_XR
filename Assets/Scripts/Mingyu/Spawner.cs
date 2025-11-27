@@ -21,6 +21,12 @@ public class Spawner : MonoBehaviour
     public Transform zombieTargetPoint;         // 모든 좀비가 달려갈 타겟
     public Transform spiderTargetPoint;         // 스파이더가 향할 타겟
 
+    [Header("Monster Limit")]
+    public int maxMonsters = 4;                 // 최대 몬스터 수 (좀비+스파이더 합산)
+
+    // 현재 살아있는 몬스터들 추적용
+    private List<GameObject> activeMonsters = new List<GameObject>();
+
     void Start()
     {
         StartCoroutine(SpawnRoutine());
@@ -37,6 +43,16 @@ public class Spawner : MonoBehaviour
 
     void SpawnRandomMonster()
     {
+        // 먼저 null 정리 (죽어서 Destroy된 애들 제거)
+        activeMonsters.RemoveAll(m => m == null);
+
+        // 최대 마리 수에 도달했으면 스폰 스킵
+        if (activeMonsters.Count >= maxMonsters)
+        {
+            //Debug.Log($"🐾 Max monsters reached ({activeMonsters.Count}/{maxMonsters}), skip spawn.");
+            return;
+        }
+
         bool spawnZombie = (Random.value < zombieSpawnChance);
 
         if (spawnZombie)
@@ -59,6 +75,9 @@ public class Spawner : MonoBehaviour
 
         Transform point = zombieSpawnPoints[Random.Range(0, zombieSpawnPoints.Count)];
         GameObject monster = Instantiate(zombiePrefab, point.position, point.rotation);
+
+        // 리스트에 등록
+        activeMonsters.Add(monster);
 
         // 좀비에게 타겟 포인트 할당
         ZombieNavTarget mover = monster.GetComponent<ZombieNavTarget>();
@@ -85,7 +104,10 @@ public class Spawner : MonoBehaviour
         Transform point = spiderSpawnPoints[Random.Range(0, spiderSpawnPoints.Count)];
         GameObject spider = Instantiate(spiderPrefab, point.position, point.rotation);
 
-        // ✅ 스파이더에게 타겟 포인트 할당 (SpiderCeilingFollowTarget 사용)
+        // 리스트에 등록
+        activeMonsters.Add(spider);
+
+        // 스파이더에게 타겟 포인트 할당 (SpiderCeilingFollowTarget 사용)
         SpiderCeilingFollowTarget ctrl = spider.GetComponent<SpiderCeilingFollowTarget>();
         if (ctrl != null)
         {
