@@ -25,7 +25,7 @@ public class ZombieNavTarget : MonoBehaviour
 
     // 플래그 관련
     private suin_FlagHub hub;
-    private bool isAlerted = false;        // 한 번이라도 플래그가 true면 true 유지
+    private bool isAlerted = false;        // 허브에서 true/false 따라감
 
     // 배회 관련
     private Vector3 wanderCenter;
@@ -74,13 +74,16 @@ public class ZombieNavTarget : MonoBehaviour
     {
         if (!useAlert) return;
 
-        if (v)
+        isAlerted = v;  // true면 경계모드, false면 다시 idle
+
+        if (isAlerted && targetPoint != null)
         {
-            isAlerted = true;   // 한 번 true 되면 계속 경계 상태 유지
-            if (targetPoint != null)
-            {
-                SetDestinationToTarget();
-            }
+            SetDestinationToTarget();
+        }
+        else if (!isAlerted && useRandomWander)
+        {
+            // 경계 해제되면 배회로 자연스럽게 돌아가게 하려면
+            agent.ResetPath();  // 이전 추적 경로 끊기 (선택)
         }
     }
 
@@ -170,7 +173,7 @@ public class ZombieNavTarget : MonoBehaviour
 
         if (wanderAreaMesh != null)
         {
-            // 🔹 MeshRenderer bounds 안에서 랜덤 위치 선택
+            // MeshRenderer bounds 안에서 랜덤 위치 선택
             var b = wanderAreaMesh.bounds;
             float rx = Random.Range(b.min.x, b.max.x);
             float rz = Random.Range(b.min.z, b.max.z);
@@ -178,7 +181,7 @@ public class ZombieNavTarget : MonoBehaviour
         }
         else
         {
-            // 🔹 fallback: 초기 위치 기준 반경 wanderRadius 안
+            // fallback: 초기 위치 기준 반경 wanderRadius 안
             Vector3 randomDir = Random.insideUnitSphere;
             randomDir.y = 0f;
             randomDir *= wanderRadius;

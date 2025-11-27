@@ -24,6 +24,14 @@ public class Spawner : MonoBehaviour
     [Header("Monster Limit")]
     public int maxMonsters = 4;                 // 최대 몬스터 수 (좀비+스파이더 합산)
 
+    [Header("Spider Env (씬 오브젝트 참조)")]
+    public MeshRenderer spiderRoofMesh;         // 거미가 돌아다닐 천장 MeshRenderer
+    public LayerMask spiderCeilingLayer;        // 거미가 붙을 천장 레이어
+    public LayerMask spiderGroundLayer;         // 거미가 떨어져서 닿을 바닥 레이어
+
+    [Header("Zombie Env (씬 오브젝트 참조)")]
+    public MeshRenderer zombieWanderAreaMesh;   // 좀비가 배회할 바닥 영역 MeshRenderer (있으면)
+
     // 현재 살아있는 몬스터들 추적용
     private List<GameObject> activeMonsters = new List<GameObject>();
 
@@ -79,11 +87,17 @@ public class Spawner : MonoBehaviour
         // 리스트에 등록
         activeMonsters.Add(monster);
 
-        // 좀비에게 타겟 포인트 할당
+        // 좀비에게 타겟 포인트 + 환경 정보 할당
         ZombieNavTarget mover = monster.GetComponent<ZombieNavTarget>();
         if (mover != null)
         {
             mover.SetTarget(zombieTargetPoint);
+
+            // 🔹 좀비 배회 영역 MeshRenderer 주입 (스크립트에 해당 필드가 있을 때)
+            if (zombieWanderAreaMesh != null)
+            {
+                mover.wanderAreaMesh = zombieWanderAreaMesh;
+            }
         }
         else
         {
@@ -107,11 +121,19 @@ public class Spawner : MonoBehaviour
         // 리스트에 등록
         activeMonsters.Add(spider);
 
-        // 스파이더에게 타겟 포인트 할당 (SpiderCeilingFollowTarget 사용)
+        // 스파이더에게 타겟 포인트 + 환경 정보 할당 (SpiderCeilingFollowTarget 사용)
         SpiderCeilingFollowTarget ctrl = spider.GetComponent<SpiderCeilingFollowTarget>();
         if (ctrl != null)
         {
             ctrl.SetTarget(spiderTargetPoint);
+
+            // 🔹 씬의 천장/레이어 정보 주입
+            if (spiderRoofMesh != null)
+            {
+                ctrl.roofMesh = spiderRoofMesh;
+            }
+            ctrl.ceilingLayer = spiderCeilingLayer;
+            ctrl.groundLayer  = spiderGroundLayer;
         }
         else
         {

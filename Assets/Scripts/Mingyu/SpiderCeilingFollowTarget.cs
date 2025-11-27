@@ -63,7 +63,7 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
     private bool isWebActive = false;
     private Vector3 webStartPos;
 
-    // 플래그 연동 (한 번이라도 true 들어오면 플레이어 추적 시작)
+    // 플래그 연동
     private bool isAlerted = false;
     private suin_FlagHub hub;
 
@@ -94,10 +94,8 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
 
     void OnAlertFlag(bool v)
     {
-        if (v)
-        {
-            isAlerted = true;   // 어떤 플래그든 한 번 true 들어오면 경계 모드
-        }
+        // 허브에서 true → 1.5초 뒤 false를 쏘므로, 그대로 따라가기
+        isAlerted = v;
     }
 
     void Start()

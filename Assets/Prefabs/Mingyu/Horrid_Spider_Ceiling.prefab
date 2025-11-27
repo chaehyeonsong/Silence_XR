@@ -456,7 +456,7 @@ MonoBehaviour:
   ceilingLayer:
     serializedVersion: 2
     m_Bits: 128
-  ceilingCheckDistance: 0.1
+  ceilingCheckDistance: 3
   ceilingStickOffset: 0.001
   groundLayer:
     serializedVersion: 2

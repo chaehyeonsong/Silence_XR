@@ -51,12 +51,6 @@ MonoBehaviour:
   - {fileID: 0}
   - {fileID: 0}
   - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
   spiderSpawnPoints:
   - {fileID: 0}
   - {fileID: 0}
@@ -67,3 +61,12 @@ MonoBehaviour:
   zombieSpawnChance: 0.5
   zombieTargetPoint: {fileID: 0}
   spiderTargetPoint: {fileID: 0}
+  maxMonsters: 4
+  spiderRoofMesh: {fileID: 0}
+  spiderCeilingLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  spiderGroundLayer:
+    serializedVersion: 2
+    m_Bits: 0
+  zombieWanderAreaMesh: {fileID: 0}
