@@ -14,7 +14,7 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
 
     [Header("Movement")]
     public float ceilingMoveSpeed = 2f;
-    public float rotateSpeed = 7f; 
+    public float rotateSpeed = 7f;
     public float dropSpeed = 5f;
 
     [Header("Ceiling Settings")]
@@ -40,6 +40,14 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
     [Tooltip("Drop 시작 지점에서부터 줄을 그릴지 여부")]
     public bool keepWebFromDropStart = true;
 
+    [Header("Roof Area (거미가 배회할 천장 메쉬)")]
+    public MeshRenderer roofMesh;   // 이 mesh의 bounds(XZ) 안에서만 배회
+    private Bounds roofBounds;
+
+    [Header("Idle Wander Settings (플래그 오기 전 상태)")]
+    public bool useRandomWander = true;
+    public float wanderDirChangeInterval = 2f;
+
     private SpiderState state = SpiderState.CeilingMove;
 
     // 천장 normal (실내 방향으로 고정: 항상 아래쪽)
@@ -55,6 +63,43 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
     private bool isWebActive = false;
     private Vector3 webStartPos;
 
+    // 플래그 연동 (한 번이라도 true 들어오면 플레이어 추적 시작)
+    private bool isAlerted = false;
+    private suin_FlagHub hub;
+
+    // 랜덤 배회용
+    private Vector3 wanderDir;
+    private float wanderTimer = 0f;
+
+    void OnEnable()
+    {
+        hub = suin_FlagHub.instance;
+        if (hub != null)
+        {
+            hub.OnMoveSlightFlag  += OnAlertFlag;
+            hub.OnPlayerSoundFlag += OnAlertFlag;
+            hub.OnWaterSoundFlag  += OnAlertFlag;
+        }
+    }
+
+    void OnDisable()
+    {
+        if (hub != null)
+        {
+            hub.OnMoveSlightFlag  -= OnAlertFlag;
+            hub.OnPlayerSoundFlag -= OnAlertFlag;
+            hub.OnWaterSoundFlag  -= OnAlertFlag;
+        }
+    }
+
+    void OnAlertFlag(bool v)
+    {
+        if (v)
+        {
+            isAlerted = true;   // 어떤 플래그든 한 번 true 들어오면 경계 모드
+        }
+    }
+
     void Start()
     {
         // LineRenderer 기본 비활성화
@@ -65,6 +110,14 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
         }
 
         AttachToCeiling_And_FixNormal();
+
+        if (roofMesh != null)
+        {
+            roofBounds = roofMesh.bounds;
+        }
+
+        wanderDir = transform.forward; // 배회 시작 방향
+        wanderTimer = wanderDirChangeInterval;
     }
 
     void Update()
@@ -115,11 +168,26 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
     }
 
     // ───────────────────────────────────────────────────────────────
-    // 2) 천장에서 목표 지점까지 이동 (방향은 자유롭게 회전)
+    // 2) 천장에서 이동 로직 (플래그 전: 배회 / 플래그 후: 추적)
     // ───────────────────────────────────────────────────────────────
     void MoveOnCeiling()
     {
-        if (targetPoint == null) return;
+        // 아직 플래그가 안 들어왔거나, 타겟이 없으면 → 배회 모드
+        if (!isAlerted || targetPoint == null)
+        {
+            if (useRandomWander)
+            {
+                CeilingIdleWander();
+            }
+            else
+            {
+                // 배회 끄고 싶으면 그냥 천장에만 붙어있게
+                MaintainCeilingAttachment();
+            }
+            return;
+        }
+
+        // ───────── 여기부터는 "플래그 이후" → targetPoint 추적 ─────────
 
         // target 방향 (수평 기준)
         Vector3 dir = targetPoint.position - transform.position;
@@ -134,7 +202,9 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
         }
 
         // 앞으로 이동
-        transform.position += transform.forward * ceilingMoveSpeed * Time.deltaTime;
+        Vector3 nextPos = transform.position + transform.forward * ceilingMoveSpeed * Time.deltaTime;
+        nextPos = ClampToRoofXZ(nextPos);
+        transform.position = nextPos;
 
         // 천장에 계속 붙도록 보정
         MaintainCeilingAttachment();
@@ -176,6 +246,64 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
     }
 
     // ───────────────────────────────────────────────────────────────
+    // 2-1) 플래그 오기 전: Roof bounds 안에서 랜덤 배회
+    // ───────────────────────────────────────────────────────────────
+    void CeilingIdleWander()
+    {
+        // roofMesh가 없으면 그냥 기존 위치 유지 + 천장 붙이기만
+        if (roofMesh == null)
+        {
+            MaintainCeilingAttachment();
+            return;
+        }
+
+        // 혹시 roof가 움직일 수 있으면 매 프레임 bounds 갱신
+        roofBounds = roofMesh.bounds;
+
+        // 일정 시간마다 새로운 방향 뽑기
+        wanderTimer -= Time.deltaTime;
+        if (wanderTimer <= 0f || wanderDir == Vector3.zero)
+        {
+            wanderTimer = wanderDirChangeInterval;
+
+            // 수평 랜덤 방향
+            Vector2 r2 = Random.insideUnitCircle.normalized;
+            wanderDir = new Vector3(r2.x, 0f, r2.y);
+        }
+
+        // 회전
+        if (wanderDir != Vector3.zero)
+        {
+            Quaternion targetRot = Quaternion.LookRotation(wanderDir, fixedCeilingNormal);
+            transform.rotation = Quaternion.Lerp(transform.rotation, targetRot, rotateSpeed * Time.deltaTime);
+        }
+
+        // 이동
+        Vector3 nextPos = transform.position + transform.forward * ceilingMoveSpeed * Time.deltaTime;
+        nextPos = ClampToRoofXZ(nextPos);
+        transform.position = nextPos;
+
+        // 천장에 계속 붙도록 보정
+        MaintainCeilingAttachment();
+    }
+
+    // ───────────────────────────────────────────────────────────────
+    // Roof Mesh의 XZ bounds 안으로 클램프
+    // ───────────────────────────────────────────────────────────────
+    Vector3 ClampToRoofXZ(Vector3 pos)
+    {
+        if (roofMesh == null) return pos;
+
+        // bounds는 월드 좌표 기준
+        roofBounds = roofMesh.bounds;
+
+        pos.x = Mathf.Clamp(pos.x, roofBounds.min.x, roofBounds.max.x);
+        pos.z = Mathf.Clamp(pos.z, roofBounds.min.z, roofBounds.max.z);
+
+        return pos;
+    }
+
+    // ───────────────────────────────────────────────────────────────
     // 3) 천장 유지 (fixed normal 기반 → 흔들림 0%)
     // ───────────────────────────────────────────────────────────────
     void MaintainCeilingAttachment()
@@ -201,59 +329,54 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
     // ───────────────────────────────────────────────────────────────
     // 4) Drop: Z축 180 → X축 90을 부드럽게 회전하며 낙하 + 흰 줄 연출
     // ───────────────────────────────────────────────────────────────
-   // ───────────────────────────────────────────────────────────────
-// 4) Drop: Z축 180 → X축 90을 부드럽게 회전하며 낙하 + 흰 줄 연출
-// ───────────────────────────────────────────────────────────────
-void DropDown()
-{
-    // 이번 프레임에 떨어질 거리
-    float step = dropSpeed * Time.deltaTime;
-
-    // 1) 회전 로직 (원래 있던 거 그대로, 단 여기서는 위치는 안 움직임)
-    if (isDropRotating)
+    void DropDown()
     {
-        dropRotateTimer += Time.deltaTime;
-        float t = Mathf.Clamp01(dropRotateTimer / dropRotateDuration);
+        // 이번 프레임에 떨어질 거리
+        float step = dropSpeed * Time.deltaTime;
 
-        transform.rotation = Quaternion.Slerp(dropStartRot, dropTargetRot, t);
-
-        if (t >= 1f)
+        // 1) 회전 로직
+        if (isDropRotating)
         {
-            isDropRotating = false; // 회전 완료
+            dropRotateTimer += Time.deltaTime;
+            float t = Mathf.Clamp01(dropRotateTimer / dropRotateDuration);
+
+            transform.rotation = Quaternion.Slerp(dropStartRot, dropTargetRot, t);
+
+            if (t >= 1f)
+            {
+                isDropRotating = false; // 회전 완료
+            }
         }
-    }
 
-    // 2) 이번 프레임에 바닥을 만나는지 먼저 Ray로 체크
-    //    시작점을 약간 위로 올려서 바닥 살짝 뚫린 상태에서도 감지되게 함
-    Vector3 rayOrigin = transform.position + Vector3.up * groundCheckDistance;
-    float rayLength = step + groundCheckDistance * 2f;
+        // 2) 이번 프레임 안에 바닥을 만나는지 먼저 Ray로 체크
+        Vector3 rayOrigin = transform.position + Vector3.up * groundCheckDistance;
+        float rayLength = step + groundCheckDistance * 2f;
 
-    if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, rayLength, groundLayer))
-    {
-        // ✅ 이번 프레임 안에 바닥을 만난 경우 → 그 위치에 스냅하고 착지 처리
-        transform.position = hit.point + Vector3.up * groundStickOffset;
+        if (Physics.Raycast(rayOrigin, Vector3.down, out RaycastHit hit, rayLength, groundLayer))
+        {
+            // ✅ 이번 프레임 안에 바닥을 만난 경우 → 그 위치에 스냅하고 착지 처리
+            transform.position = hit.point + Vector3.up * groundStickOffset;
 
+            if (isWebActive && webLine != null)
+            {
+                webLine.SetPosition(0, webStartPos);
+                webLine.SetPosition(1, transform.position);
+            }
+
+            state = SpiderState.Land;
+            return;
+        }
+
+        // 3) 바닥 안 만났으면 그냥 아래로 이동
+        transform.position += Vector3.down * step;
+
+        // ☆ 거미줄(흰 줄) 업데이트
         if (isWebActive && webLine != null)
         {
-            webLine.SetPosition(0, webStartPos);
-            webLine.SetPosition(1, transform.position);
+            webLine.SetPosition(0, webStartPos);        // 위쪽 고정 점
+            webLine.SetPosition(1, transform.position); // 현재 거미 위치
         }
-
-        state = SpiderState.Land;
-        return;
     }
-
-    // 3) 바닥 안 만났으면 그냥 아래로 이동
-    transform.position += Vector3.down * step;
-
-    // ☆ 거미줄(흰 줄) 업데이트
-    if (isWebActive && webLine != null)
-    {
-        webLine.SetPosition(0, webStartPos);        // 위쪽 고정 점
-        webLine.SetPosition(1, transform.position); // 현재 거미 위치
-    }
-}
-
 
     // ───────────────────────────────────────────────────────────────
     // 5) Spawner에서 타겟을 주입하기 위한 메서드
@@ -273,4 +396,20 @@ void DropDown()
             }
         }
     }
+
+#if UNITY_EDITOR
+    // 선택했을 때 Roof bounds 시각화하면 튜닝 편함
+    void OnDrawGizmosSelected()
+    {
+        if (roofMesh == null) return;
+
+        Gizmos.color = Color.cyan;
+        Bounds b = roofMesh.bounds;
+        Vector3 center = b.center;
+        Vector3 size = b.size;
+        // Y는 얇게 줄여서 대충 XZ 영역만 보이게
+        size.y = 0.01f;
+        Gizmos.DrawWireCube(center, size);
+    }
+#endif
 }

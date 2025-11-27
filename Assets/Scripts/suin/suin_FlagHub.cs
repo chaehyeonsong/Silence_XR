@@ -1,9 +1,14 @@
 using System;
+using System.Collections;
 using UnityEngine;
 
 public class suin_FlagHub : MonoBehaviour
 {
     public static suin_FlagHub instance;
+
+    [Header("Pulse Flag Duration")]
+    [Tooltip("Move/PlayerSound/Water 플래그가 유지되는 시간 (초)")]
+    public float pulseDuration = 1.5f;
 
     void Awake()
     {
@@ -23,9 +28,90 @@ public class suin_FlagHub : MonoBehaviour
     public event Action<bool> OnPlayerSoundFlag;
     public event Action<bool> OnWaterSoundFlag;
 
-    public void SetMoveSlightFlag(bool v)   => OnMoveSlightFlag?.Invoke(v);
-    public void SetPlayerSoundFlag(bool v) => OnPlayerSoundFlag?.Invoke(v);
-    public void SetWaterSoundFlag(bool v)  => OnWaterSoundFlag?.Invoke(v);
+    // 각 플래그당 타이머 코루틴
+    private Coroutine moveSlightCo;
+    private Coroutine playerSoundCo;
+    private Coroutine waterSoundCo;
+
+    public void SetMoveSlightFlag(bool v)
+    {
+        OnMoveSlightFlag?.Invoke(v);
+
+        if (v)
+        {
+            // 기존 타이머 있으면 리셋
+            if (moveSlightCo != null) StopCoroutine(moveSlightCo);
+            moveSlightCo = StartCoroutine(ResetMoveSlightFlagAfterDelay());
+        }
+        else
+        {
+            // 직접 false를 쏜 경우 타이머 정리
+            if (moveSlightCo != null)
+            {
+                StopCoroutine(moveSlightCo);
+                moveSlightCo = null;
+            }
+        }
+    }
+
+    IEnumerator ResetMoveSlightFlagAfterDelay()
+    {
+        yield return new WaitForSeconds(pulseDuration);
+        OnMoveSlightFlag?.Invoke(false);
+        moveSlightCo = null;
+    }
+
+    public void SetPlayerSoundFlag(bool v)
+    {
+        OnPlayerSoundFlag?.Invoke(v);
+
+        if (v)
+        {
+            if (playerSoundCo != null) StopCoroutine(playerSoundCo);
+            playerSoundCo = StartCoroutine(ResetPlayerSoundFlagAfterDelay());
+        }
+        else
+        {
+            if (playerSoundCo != null)
+            {
+                StopCoroutine(playerSoundCo);
+                playerSoundCo = null;
+            }
+        }
+    }
+
+    IEnumerator ResetPlayerSoundFlagAfterDelay()
+    {
+        yield return new WaitForSeconds(pulseDuration);
+        OnPlayerSoundFlag?.Invoke(false);
+        playerSoundCo = null;
+    }
+
+    public void SetWaterSoundFlag(bool v)
+    {
+        OnWaterSoundFlag?.Invoke(v);
+
+        if (v)
+        {
+            if (waterSoundCo != null) StopCoroutine(waterSoundCo);
+            waterSoundCo = StartCoroutine(ResetWaterSoundFlagAfterDelay());
+        }
+        else
+        {
+            if (waterSoundCo != null)
+            {
+                StopCoroutine(waterSoundCo);
+                waterSoundCo = null;
+            }
+        }
+    }
+
+    IEnumerator ResetWaterSoundFlagAfterDelay()
+    {
+        yield return new WaitForSeconds(pulseDuration);
+        OnWaterSoundFlag?.Invoke(false);
+        waterSoundCo = null;
+    }
 
     // ===== Light는 "상태 저장 + 변화 알림" =====
     public event Action<bool> OnLightStateChanged; // true=On, false=Off

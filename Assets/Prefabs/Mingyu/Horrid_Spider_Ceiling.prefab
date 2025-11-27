@@ -450,7 +450,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   targetPoint: {fileID: 0}
-  ceilingMoveSpeed: 2
+  ceilingMoveSpeed: 1
   rotateSpeed: 10
   dropSpeed: 1
   ceilingLayer:
@@ -467,6 +467,9 @@ MonoBehaviour:
   dropRotateDuration: 0.3
   webLine: {fileID: 6074839173948791753}
   keepWebFromDropStart: 1
+  roofMesh: {fileID: 0}
+  useRandomWander: 1
+  wanderDirChangeInterval: 2
 --- !u!1 &6074839172118150930
 GameObject:
   m_ObjectHideFlags: 0
