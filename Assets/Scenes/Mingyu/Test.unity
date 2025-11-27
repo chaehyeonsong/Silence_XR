@@ -121,7 +121,7 @@ NavMeshSettings:
     preserveTilesOutsideBounds: 0
     debug:
       m_Flags: 0
-  m_NavMeshData: {fileID: 0}
+  m_NavMeshData: {fileID: 23800000, guid: 50c05c8d60c504bbfa2c31135bd8879d, type: 2}
 --- !u!4 &3672433 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 1757927997745153385, guid: a149d2e8b37464013a986d2c4609ad77, type: 3}
@@ -590,6 +590,14 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 8911159963713284639, guid: 0dadb0c3430e24599a35baaf93c7500b, type: 3}
+      propertyPath: spiderTargetPoint
+      value: 
+      objectReference: {fileID: 1615774877}
+    - target: {fileID: 8911159963713284639, guid: 0dadb0c3430e24599a35baaf93c7500b, type: 3}
+      propertyPath: zombieTargetPoint
+      value: 
+      objectReference: {fileID: 1615774877}
+    - target: {fileID: 8911159963713284639, guid: 0dadb0c3430e24599a35baaf93c7500b, type: 3}
       propertyPath: zombieSpawnPoints.Array.size
       value: 6
       objectReference: {fileID: 0}
@@ -854,6 +862,11 @@ Transform:
   m_Father: {fileID: 4222264918676996}
   m_RootOrder: 77
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!4 &1615774877 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 2856207028444217983, guid: 8cf8f88d6afc1427eab4f6753692797d, type: 3}
+  m_PrefabInstance: {fileID: 1644451413}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1001 &1644451413
 PrefabInstance:
   m_ObjectHideFlags: 0
