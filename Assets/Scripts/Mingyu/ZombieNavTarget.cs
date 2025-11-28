@@ -4,6 +4,12 @@ using UnityEngine.AI;
 [RequireComponent(typeof(NavMeshAgent))]
 public class ZombieNavTarget : MonoBehaviour
 {
+
+    [Header("Calm Return Settings")]
+    public float calmTimeout = 15f;   // flag 없으면 이 시간 뒤 귀환
+    private float noFlagTimer = 0f;   // 마지막 flag 이후 경과 시간
+
+
     [Header("Target")]
     public Transform targetPoint;          // 좀비가 달려갈 목적지
     public float arriveDistance = 0.35f;   // 도착 판정 거리
@@ -24,6 +30,11 @@ public class ZombieNavTarget : MonoBehaviour
     [Header("Alert Settings (플래그 들어오면 추적 시작)")]
     public bool useAlert = true;           // suin_FlagHub 플래그 연동 여부
 
+    [Header("Return Home Settings")]
+    [Tooltip("Spawner에서 주입되는 스폰 포인트")]
+    public Transform spawnPoint;           // 스폰 위치
+    public float returnArriveDistance = 0.3f;
+
     private NavMeshAgent agent;
 
     // 플래그 관련
@@ -34,6 +45,9 @@ public class ZombieNavTarget : MonoBehaviour
     private Vector3 wanderCenter;
     private float wanderTimer = 0f;
 
+    // Calm 이후 집에 돌아가는 상태
+    private bool isReturningHome = false;
+
     void Awake()
     {
         agent = GetComponent<NavMeshAgent>();
@@ -43,7 +57,7 @@ public class ZombieNavTarget : MonoBehaviour
         agent.autoRepath = true;
         agent.obstacleAvoidanceType = ObstacleAvoidanceType.HighQualityObstacleAvoidance;
 
-        // ⚠️ speed는 절대 코드에서 건드리지 않음 (Inspector 값 그대로 사용)
+        // speed 등은 Inspector에서 조절 (코드에서 건드리지 않음)
         wanderCenter = transform.position;
     }
 
@@ -74,21 +88,24 @@ public class ZombieNavTarget : MonoBehaviour
 
     // 플래그 들어왔을 때 호출
     void OnAlertFlag(bool v)
+{
+    if (!useAlert) return;
+    if (isReturningHome) return;
+
+    isAlerted = v;
+
+    if (v)   // flag가 켜질 때마다 타이머 리셋
     {
-        if (!useAlert) return;
-
-        isAlerted = v;  // true면 경계모드, false면 다시 idle
-
-        if (isAlerted && targetPoint != null)
-        {
+        noFlagTimer = 0f;
+        if (targetPoint != null)
             SetDestinationToTarget();
-        }
-        else if (!isAlerted && useRandomWander)
-        {
-            // 경계 해제되면 배회로 자연스럽게 돌아가게
-            agent.ResetPath();  // 이전 추적 경로 끊기
-        }
     }
+    else if (!v && useRandomWander)
+    {
+        agent.ResetPath();
+    }
+}
+
 
     void Start()
     {
@@ -99,28 +116,60 @@ public class ZombieNavTarget : MonoBehaviour
     }
 
     void Update()
-    {
-        if (agent == null) return;
+{
+    if (agent == null) return;
 
-        // 1) Alert 이후 + 타겟 존재 → 타겟 추적
-        if (isAlerted && targetPoint != null)
+    // 0) flag가 안 들어온 시간 누적
+    noFlagTimer += Time.deltaTime;
+
+    // 1) 아직 귀환 중이 아니고, 15초 넘었으면 귀환 시작
+    if (!isReturningHome && noFlagTimer >= calmTimeout && spawnPoint != null)
+    {
+        isReturningHome = true;
+        isAlerted = false;
+        agent.ResetPath();
+    }
+
+    // 2) 귀환 중인 상태
+    if (isReturningHome)
+    {
+        if (spawnPoint == null)
         {
-            agent.isStopped = false;
-            agent.stoppingDistance = arriveDistance;
-            agent.SetDestination(targetPoint.position);
+            Destroy(gameObject);
             return;
         }
 
-        // 2) 아직 Alert 안 된 상태 → 랜덤 배회
-        if (useRandomWander)
+        agent.isStopped = false;
+        agent.stoppingDistance = 0f;
+        agent.SetDestination(spawnPoint.position);
+
+        if (!agent.pathPending &&
+            agent.remainingDistance <= returnArriveDistance)
         {
-            IdleWander();
+            Destroy(gameObject);
         }
-        else
-        {
-            agent.isStopped = true;
-        }
+        return;
     }
+
+    // 3) 이하 기존 로직 (Alert 추적/배회) 그대로 유지
+    if (isAlerted && targetPoint != null)
+    {
+        agent.isStopped = false;
+        agent.stoppingDistance = arriveDistance;
+        agent.SetDestination(targetPoint.position);
+        return;
+    }
+
+    if (useRandomWander)
+    {
+        IdleWander();
+    }
+    else
+    {
+        agent.isStopped = true;
+    }
+}
+
 
     // ✅ Spawner에서 호출할 메서드
     public void SetTarget(Transform target)
@@ -176,7 +225,7 @@ public class ZombieNavTarget : MonoBehaviour
 
         if (wanderAreaMesh != null)
         {
-            // 🔹 MeshRenderer bounds 안에서 랜덤 위치 선택 (너무 가까우면 다시 뽑기)
+            // MeshRenderer bounds 안에서 랜덤 위치 선택 (너무 가까우면 다시 뽑기)
             var b = wanderAreaMesh.bounds;
 
             for (int i = 0; i < 8; i++)   // 최대 8번 정도 시도
@@ -204,7 +253,7 @@ public class ZombieNavTarget : MonoBehaviour
         }
         else
         {
-            // 🔹 fallback: 원형 반경 (역시 최소 거리 보장)
+            // fallback: 원형 반경 (역시 최소 거리 보장)
             for (int i = 0; i < 8; i++)
             {
                 Vector2 dir2 = Random.insideUnitCircle.normalized;
