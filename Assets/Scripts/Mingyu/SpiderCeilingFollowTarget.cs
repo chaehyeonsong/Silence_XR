@@ -13,7 +13,7 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
     public Transform targetPoint;
 
     [Header("Movement")]
-    public float ceilingMoveSpeed = 2f;
+    public float ceilingMoveSpeed = 2f;   // ⚠️ 이거 하나만 사용 (속도)
     public float rotateSpeed = 7f;
     public float dropSpeed = 5f;
 
@@ -46,7 +46,7 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
 
     [Header("Idle Wander Settings (플래그 오기 전 상태)")]
     public bool useRandomWander = true;
-    public float wanderDirChangeInterval = 2f;
+    public float wanderDirChangeInterval = 3f;  // 한 방향으로 유지할 시간
 
     private SpiderState state = SpiderState.CeilingMove;
 
@@ -63,7 +63,7 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
     private bool isWebActive = false;
     private Vector3 webStartPos;
 
-    // 플래그 연동
+    // 플래그 연동 (허브에서 true/false 들어옴)
     private bool isAlerted = false;
     private suin_FlagHub hub;
 
@@ -96,6 +96,7 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
     {
         // 허브에서 true → 1.5초 뒤 false를 쏘므로, 그대로 따라가기
         isAlerted = v;
+        //Debug.Log($"[Spider Alert] {name} isAlerted = {isAlerted}");
     }
 
     void Start()
@@ -199,7 +200,7 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
             transform.rotation = Quaternion.Lerp(transform.rotation, targetRot, rotateSpeed * Time.deltaTime);
         }
 
-        // 앞으로 이동
+        // 앞으로 이동 (alert도 같은 speed 사용)
         Vector3 nextPos = transform.position + transform.forward * ceilingMoveSpeed * Time.deltaTime;
         nextPos = ClampToRoofXZ(nextPos);
         transform.position = nextPos;
@@ -247,43 +248,49 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
     // 2-1) 플래그 오기 전: Roof bounds 안에서 랜덤 배회
     // ───────────────────────────────────────────────────────────────
     void CeilingIdleWander()
+{
+    // roofMesh가 없으면 그냥 기존 위치 유지 + 천장 붙이기만
+    if (roofMesh == null)
     {
-        // roofMesh가 없으면 그냥 기존 위치 유지 + 천장 붙이기만
-        if (roofMesh == null)
-        {
-            MaintainCeilingAttachment();
-            return;
-        }
-
-        // 혹시 roof가 움직일 수 있으면 매 프레임 bounds 갱신
-        roofBounds = roofMesh.bounds;
-
-        // 일정 시간마다 새로운 방향 뽑기
-        wanderTimer -= Time.deltaTime;
-        if (wanderTimer <= 0f || wanderDir == Vector3.zero)
-        {
-            wanderTimer = wanderDirChangeInterval;
-
-            // 수평 랜덤 방향
-            Vector2 r2 = Random.insideUnitCircle.normalized;
-            wanderDir = new Vector3(r2.x, 0f, r2.y);
-        }
-
-        // 회전
-        if (wanderDir != Vector3.zero)
-        {
-            Quaternion targetRot = Quaternion.LookRotation(wanderDir, fixedCeilingNormal);
-            transform.rotation = Quaternion.Lerp(transform.rotation, targetRot, rotateSpeed * Time.deltaTime);
-        }
-
-        // 이동
-        Vector3 nextPos = transform.position + transform.forward * ceilingMoveSpeed * Time.deltaTime;
-        nextPos = ClampToRoofXZ(nextPos);
-        transform.position = nextPos;
-
-        // 천장에 계속 붙도록 보정
         MaintainCeilingAttachment();
+        return;
     }
+
+    // 혹시 roof가 움직일 수 있으면 매 프레임 bounds 갱신
+    roofBounds = roofMesh.bounds;
+
+    // 일정 시간마다 새로운 방향 뽑기
+    wanderTimer -= Time.deltaTime;
+    if (wanderTimer <= 0f || wanderDir == Vector3.zero)
+    {
+        // 🔥 예전에는 wanderDirChangeInterval 그대로였는데,
+        // 이제는 2배 길게 같은 방향 유지 → 같은 속도로 2배 거리 이동
+        wanderTimer = wanderDirChangeInterval * 2f;
+
+        // 수평 랜덤 방향
+        Vector2 r2 = Random.insideUnitCircle.normalized;
+        wanderDir = new Vector3(r2.x, 0f, r2.y);
+
+        Debug.Log($"[Spider IdleWander] {name} → new wanderDir = {wanderDir}");
+    }
+
+    // 회전
+    if (wanderDir != Vector3.zero)
+    {
+        Quaternion targetRot = Quaternion.LookRotation(wanderDir, fixedCeilingNormal);
+        transform.rotation = Quaternion.Lerp(transform.rotation, targetRot, rotateSpeed * Time.deltaTime);
+    }
+
+    // ✅ 속도는 그대로 유지 (ceilingMoveSpeed)
+    Vector3 nextPos = transform.position + transform.forward * ceilingMoveSpeed * Time.deltaTime;
+    nextPos = ClampToRoofXZ(nextPos);
+    transform.position = nextPos;
+
+    // 천장에 계속 붙도록 보정
+    MaintainCeilingAttachment();
+}
+
+
 
     // ───────────────────────────────────────────────────────────────
     // Roof Mesh의 XZ bounds 안으로 클램프
