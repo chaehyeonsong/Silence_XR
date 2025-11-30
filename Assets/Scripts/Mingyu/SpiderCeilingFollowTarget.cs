@@ -32,7 +32,7 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
     public float ceilingStickOffset = 0.05f;
 
     [Header("Ground Settings")]
-    public LayerMask groundLayer;      // 🚨 Inspector에서 'Default'나 바닥 레이어 꼭 체크하세요!
+    public LayerMask groundLayer;      
     public float groundCheckDistance = 1.0f;
     public float groundStickOffset = 0.05f;
 
@@ -57,20 +57,21 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
     public bool useRandomWander = true;
     public float wanderDirChangeInterval = 3f;
 
+    // 내부 상태 변수들
     private SpiderState state = SpiderState.CeilingMove;
     private Vector3 fixedCeilingNormal;
 
-    // Drop 회전
+    // Drop 회전 관련
     private bool isDropRotating = false;
     private Quaternion dropStartRot;
     private Quaternion dropTargetRot;
     private float dropRotateTimer = 0f;
 
-    // Web
+    // Web 관련
     private bool isWebActive = false;
     private Vector3 webStartPos;
 
-    // Flag
+    // Flag / 상태
     private bool isAlerted = false;
     private suin_FlagHub hub;
 
@@ -78,6 +79,9 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
     private Vector3 wanderDir;
     private float wanderTimer = 0f;
     private bool isReturningHome = false;
+
+    // ★ 중복 호출 방지용 플래그
+    private bool hasTriggeredGameOver = false;
 
     void OnEnable()
     {
@@ -103,7 +107,7 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
     void OnAlertFlag(bool v)
     {
         if (isReturningHome) return;
-        if (lockToTarget) return;
+        if (lockToTarget) return; // 이미 타겟 고정 중이면 무시
 
         isAlerted = v;
         if (v) noFlagTimer = 0f;
@@ -126,6 +130,7 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
 
     void Update()
     {
+        // 1. 상태 업데이트 (Lock 상태면 무조건 Alert 유지)
         if (lockToTarget)
         {
             isAlerted = true;
@@ -133,17 +138,22 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
         }
         else
         {
+            // Calm 체크 로직
             noFlagTimer += Time.deltaTime;
             if (!isReturningHome && noFlagTimer >= calmTimeout && spawnPoint != null)
             {
                 isReturningHome = true;
                 isAlerted = false;
+                
+                // 만약 떨어지던 중이었다면 다시 천장 이동 상태로 복귀 (원하는 기획에 따라 변경 가능)
                 if (state == SpiderState.Drop) state = SpiderState.CeilingMove;
+                
                 if (webLine != null) { webLine.enabled = false; webLine.positionCount = 0; }
                 isWebActive = false;
             }
         }
 
+        // 2. 행동 실행
         switch (state)
         {
             case SpiderState.CeilingMove:
@@ -153,10 +163,12 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
                 DropDown();
                 break;
             case SpiderState.Land:
+                // 착지 완료 상태. 이미 게임오버 요청을 보냈으므로 대기.
                 break;
         }
     }
 
+    // 초기화 및 천장 부착
     void AttachToCeiling_And_FixNormal()
     {
         if (Physics.Raycast(transform.position, Vector3.up, out RaycastHit hit, ceilingCheckDistance, ceilingLayer))
@@ -173,18 +185,21 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
         }
     }
 
+    // 천장 이동 로직
     void MoveOnCeiling()
     {
         if (lockToTarget) isReturningHome = false;
 
+        // 집으로 돌아가는 로직
         if (isReturningHome && spawnPoint != null)
         {
             MoveToTarget(spawnPoint.position, ceilingMoveSpeed);
             if (Vector3.Distance(GetXZ(transform.position), GetXZ(spawnPoint.position)) <= returnArriveRadius)
-                Destroy(gameObject);
+                Destroy(gameObject); // 집에 도착하면 삭제
             return;
         }
 
+        // 평화로운 상태일 때 배회
         if (!isAlerted || targetPoint == null)
         {
             if (useRandomWander && !lockToTarget) CeilingIdleWander();
@@ -192,9 +207,11 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
             return;
         }
 
+        // 추적 로직
         float currentSpeed = lockToTarget ? (ceilingMoveSpeed * chaseSpeedMultiplier) : ceilingMoveSpeed;
         MoveToTarget(targetPoint.position, currentSpeed);
 
+        // 타겟과 수평 거리가 가까워지면 낙하 시작
         float dist = Vector3.Distance(GetXZ(transform.position), GetXZ(targetPoint.position));
         if (dist <= dropHorizontalRadius)
         {
@@ -202,10 +219,11 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
         }
     }
 
+    // 목표 지점으로 이동 (회전 포함)
     void MoveToTarget(Vector3 targetPos, float speed)
     {
         Vector3 dir = targetPos - transform.position;
-        dir.y = 0f;
+        dir.y = 0f; // 높이 무시
         if (dir.sqrMagnitude > 0.001f)
         {
             dir.Normalize();
@@ -219,16 +237,14 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
         MaintainCeilingAttachment();
     }
 
-    // ───────────────────────────────────────────────────────────────
-    // Drop 시작: 가던 방향 유지 + X축 -90도 회전 (아래 보기)
-    // ───────────────────────────────────────────────────────────────
+    // 낙하 시작 초기화
     void StartDrop()
     {
         isDropRotating = true;
         dropRotateTimer = 0f;
         dropStartRot = transform.rotation;
 
-        // "현재 회전값 * X축 -90도" (유저분이 원하시는 -y 바라보기)
+        // 현재 방향에서 고개만 아래(-90도)로 숙임
         dropTargetRot = transform.rotation * Quaternion.Euler(-90f, 0f, 0f);
 
         if (webLine != null)
@@ -236,20 +252,23 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
             isWebActive = true;
             webLine.enabled = true;
             webLine.positionCount = 2;
+            // 줄 시작점을 천장(현재위치) or 타겟위치 중 선택
             webStartPos = keepWebFromDropStart ? transform.position : targetPoint.position;
             webLine.SetPosition(0, webStartPos);
             webLine.SetPosition(1, transform.position);
         }
-        state = SpiderState.Drop;
         
+        state = SpiderState.Drop;
         Debug.Log("🕷️ [Spider] Drop 시작! (-Y 방향 하강)");
     }
 
+    // 배회 로직
     void CeilingIdleWander()
     {
         if (roofMesh == null) { MaintainCeilingAttachment(); return; }
         roofBounds = roofMesh.bounds;
         wanderTimer -= Time.deltaTime;
+        
         if (wanderTimer <= 0f || wanderDir == Vector3.zero)
         {
             wanderTimer = wanderDirChangeInterval * 2f;
@@ -262,12 +281,14 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
             Quaternion tr = Quaternion.LookRotation(wanderDir, fixedCeilingNormal);
             transform.rotation = Quaternion.Lerp(transform.rotation, tr, rotateSpeed * Time.deltaTime);
         }
+        
         Vector3 next = transform.position + transform.forward * ceilingMoveSpeed * Time.deltaTime;
         next = ClampToRoofXZ(next);
         transform.position = next;
         MaintainCeilingAttachment();
     }
 
+    // 이동 제한 (천장 범위 밖으로 나가지 않게)
     Vector3 ClampToRoofXZ(Vector3 pos)
     {
         if (roofMesh == null) return pos;
@@ -277,6 +298,7 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
         return pos;
     }
 
+    // 천장에 딱 붙어있도록 유지
     void MaintainCeilingAttachment()
     {
         if (Physics.Raycast(transform.position, -fixedCeilingNormal, out RaycastHit hit, ceilingCheckDistance, ceilingLayer))
@@ -289,13 +311,13 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
     }
 
     // ───────────────────────────────────────────────────────────────
-    // 🔥 [수정됨] 바닥 뚫림 방지 로직 (Ray를 위에서 아래로 쏨)
+    // ★ 낙하 및 착지 로직 (여기서 Game Over 호출)
     // ───────────────────────────────────────────────────────────────
     void DropDown()
     {
         float step = dropSpeed * Time.deltaTime;
 
-        // 1) 회전
+        // 1) 회전 (고개를 아래로)
         if (isDropRotating)
         {
             dropRotateTimer += Time.deltaTime;
@@ -304,31 +326,25 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
             if (t >= 1f) isDropRotating = false;
         }
 
-        // 2) 바닥 감지 (안전 장치: 거미 위치보다 1.5m 위에서부터 쏨)
-        // 이렇게 하면 거미가 바닥에 살짝 파묻혀 있어도 위에서 쏜 Ray에 걸립니다.
+        // 2) 바닥 감지 (Raycast)
+        // 거미 머리 위쪽에서부터 Ray를 쏴서 바닥을 미리 감지 (뚫림 방지)
         float rayStartOffset = 1.5f; 
         Vector3 rayOrigin = transform.position + Vector3.up * rayStartOffset;
-        
-        // 탐지 거리: 오프셋(1.5) + 안전거리(1.0) + 이동속도 고려(step*2)
-        float rayLength = rayStartOffset + groundCheckDistance + (step * 2f);
+        float rayLength = rayStartOffset + groundCheckDistance + (step * 2f); // 넉넉하게 체크
 
-        // 씬 뷰에서 빨간 선이 바닥에 닿는지 확인하세요!
+        // 디버그용 붉은 선
         Debug.DrawRay(rayOrigin, Vector3.down * rayLength, Color.red);
 
         RaycastHit hit;
-        // 반드시 -y 방향(Vector3.down)으로 쏨
         if (Physics.Raycast(rayOrigin, Vector3.down, out hit, rayLength, groundLayer))
         {
-            // hit.point.y는 바닥의 높이입니다.
-            // 현재 거미의 발 위치(transform.position.y)가 바닥 근처에 왔다면 멈춤
-            
-            // "현재 높이" - "이번 프레임 이동 거리" <= "바닥 높이 + 오프셋"
+            // 이번 프레임 이동 시 바닥을 뚫거나 거의 도달한다면
             if (transform.position.y - step <= hit.point.y + groundStickOffset)
             {
-                // 위치를 바닥 표면 위로 딱 고정 (스냅)
+                // 위치를 바닥 바로 위로 강제 이동 (Snap)
                 transform.position = new Vector3(transform.position.x, hit.point.y + groundStickOffset, transform.position.z);
                 
-                // 줄 업데이트
+                // 거미줄 끝점 업데이트
                 if (isWebActive && webLine != null)
                 {
                     webLine.SetPosition(0, webStartPos);
@@ -337,13 +353,24 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
 
                 state = SpiderState.Land;
                 Debug.Log($"🕷️ [Spider] 바닥 착지 완료! ({hit.collider.name})");
+
+                // ============================================
+                // ★ 핵심: 착지 순간 -> FlagHub에 죽음 신호 전송
+                // ============================================
+                if (!hasTriggeredGameOver && hub != null)
+                {
+                    hasTriggeredGameOver = true; // 중복 실행 방지
+                    Debug.Log("🕷️ [Spider] 착지함 -> FlagHub.TriggerPlayerKillFlag() 호출!");
+                    hub.TriggerPlayerKillFlag(); // -> FlagHub -> GameManager -> Game Over
+                }
                 return;
             }
         }
 
-        // 3) 이동 (바닥이 아직 멀었으면 계속 하강)
+        // 3) 바닥에 안 닿았으면 계속 하강
         transform.position += Vector3.down * step;
 
+        // 거미줄 업데이트
         if (isWebActive && webLine != null)
         {
             webLine.SetPosition(0, webStartPos);
@@ -351,16 +378,24 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
         }
     }
 
+    // 유틸리티: Y축 제거
     Vector3 GetXZ(Vector3 v) => new Vector3(v.x, 0, v.z);
 
-    public void SetTarget(Transform target) { targetPoint = target; }
+    // 외부에서 타겟 설정 (KillFlagZone 등에서 호출)
+    public void SetTarget(Transform target) 
+    { 
+        targetPoint = target; 
+    }
 
+    // 강제로 타겟 고정 및 추적 시작 (KillFlagZone에서 호출)
     public void ForceLockToTarget(Transform target)
     {
         targetPoint = target;
         lockToTarget = true;
         isAlerted = true;
         isReturningHome = false;
+        
+        Debug.Log("🕷️ [Spider] 강제 타겟 고정 (Kill Mode)");
     }
 
 #if UNITY_EDITOR

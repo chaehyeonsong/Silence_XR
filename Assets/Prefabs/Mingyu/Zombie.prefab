@@ -2771,6 +2771,7 @@ MonoBehaviour:
   calmTimeout: 15
   targetPoint: {fileID: 0}
   arriveDistance: 0.35
+  killTriggerDistance: 1.5
   useRandomWander: 1
   wanderRadius: 8
   wanderInterval: 8
