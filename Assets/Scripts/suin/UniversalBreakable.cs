@@ -32,6 +32,19 @@ public class UniversalBreakable : MonoBehaviour
     [Tooltip("파편이 추가로 회전할 랜덤 각속도 크기")]
     public float shardRandomAngularVelocity = 1.0f;
 
+    [Header("Impact Sound (non-breaking)")]
+    [Tooltip("깨지지 않을 때 충돌 소리를 재생할 최소 속도")]
+    public float impactSoundVelocityThreshold = 1.0f;
+
+    public AudioClip impactClip;
+    [Range(0f, 1f)] public float impactVolume = 1.0f;
+
+    [Tooltip("연속 충돌 시 소리가 너무 자주 나지 않도록 막는 쿨다운 (초)")]
+    public float impactSoundCooldown = 0.1f;
+
+    private float _lastImpactSoundTime = -999f;
+
+    
     [Header("Sound")]
     public AudioClip breakClip;
     [Range(0f, 1f)] public float breakVolume = 1.0f;
@@ -177,11 +190,42 @@ public class UniversalBreakable : MonoBehaviour
 
         float impactSpeed = collision.relativeVelocity.magnitude;
 
-        if (impactSpeed >= breakVelocityThreshold)
+        // 먼저 깨질지 여부 결정
+        bool willBreak = impactSpeed >= breakVelocityThreshold;
+
+        // 깨지지 않는 충돌 + 일정 속도 이상이면 "통통" 충돌 사운드 재생
+        if (!willBreak && impactClip != null && impactVolume > 0f)
+        {
+            if (impactSpeed >= impactSoundVelocityThreshold)
+            {
+                if (Time.time - _lastImpactSoundTime >= impactSoundCooldown)
+                {
+                    PlayImpactSound(collision);
+                    _lastImpactSoundTime = Time.time;
+                }
+            }
+        }
+
+        // 그 다음 깨짐 판정
+        if (willBreak)
         {
             Break(collision);
         }
     }
+    
+    private void PlayImpactSound(Collision collision)
+    {
+        if (impactClip == null || impactVolume <= 0f)
+            return;
+
+        Vector3 pos = transform.position;
+        if (collision != null && collision.contactCount > 0)
+            pos = collision.GetContact(0).point;
+
+        AudioSource.PlayClipAtPoint(impactClip, pos, impactVolume);
+    }
+
+
 
     public void ForceBreak()
     {
