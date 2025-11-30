@@ -41,7 +41,10 @@ public class suin_ReactiveSound : MonoBehaviour
     /// <summary>
     /// 엔트리 이름으로 재생. volumeScale은 동적 가중치(예: 속도 기반)로 곱해짐.
     /// </summary>
-    public bool TryPlayByName(string entryName, float volumeScale = 1f, Transform overrideAnchor = null)
+    public bool TryPlayByName(
+        string entryName,
+        float volumeScale = 1f,
+        Transform overrideAnchor = null)
     {
         if (SM == null || string.IsNullOrEmpty(entryName)) return false;
 
@@ -58,6 +61,42 @@ public class suin_ReactiveSound : MonoBehaviour
         var anchor = overrideAnchor ? overrideAnchor : (e.anchor ? e.anchor : (defaultAnchor ? defaultAnchor : transform));
         return SM.PlayAtSource(e.key, anchor, vol, flagOrCooldown);
     }
+
+    // suin_ReactiveSound.cs 안, 클래스 내부에 추가
+    public bool TryPlayByNameWithPitch(
+        string entryName,
+        float volumeScale,
+        float pitchScale,
+        float extraPitchJitter = 0.03f,
+        Transform overrideAnchor = null
+    )
+    {
+        if (SM == null || string.IsNullOrEmpty(entryName)) return false;
+
+        var e = FindEntry(entryName);
+        if (e == null || string.IsNullOrEmpty(e.key)) return false;
+
+        float vol = Mathf.Clamp01(e.volumeMul * volumeScale);
+
+        bool allow = e.allowOverlap;
+        float flagOrCooldown = allow
+            ? -2f                                // 겹쳐 재생
+            : (e.minCooldown > 0f ? e.minCooldown : -1f); // 쿨다운 또는 재생중 무시
+
+        var anchor = overrideAnchor
+            ? overrideAnchor
+            : (e.anchor ? e.anchor : (defaultAnchor ? defaultAnchor : transform));
+
+        return suin_SoundManager.instance.PlayAtSourceWithPitch(
+            e.key,
+            anchor,
+            vol,
+            pitchScale,
+            flagOrCooldown,
+            extraPitchJitter
+        );
+    }
+
 
     /// <summary>
     /// key를 직접 지정해 재생(특정 엔트리와 무관하게). 필요 시 사용.
