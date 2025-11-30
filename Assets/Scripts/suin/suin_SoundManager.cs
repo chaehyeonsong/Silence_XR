@@ -100,14 +100,29 @@ public class suin_SoundManager : MonoBehaviour
 
     // --- 공용 API (변경 없음) ---
     public bool Play(string key, float volScale = 1f, float minCooldown = -1f)
-        => PlayInternal(key, null, Vector3.zero, volScale, minCooldown, Mode.Global);
+        => PlayInternal(key, null, Vector3.zero, volScale, minCooldown, Mode.Global, 1f, 0f);
 
     public bool PlayAtPosition(string key, Vector3 pos, float volScale = 1f, float minCooldown = -1f)
-        => PlayInternal(key, null, pos, volScale, minCooldown, Mode.Position);
+        => PlayInternal(key, null, pos, volScale, minCooldown, Mode.Position, 1f, 0f);
 
     public bool PlayAtSource(string key, Transform source, float volScale = 1f, float minCooldown = -1f)
-        => source ? PlayInternal(key, source, Vector3.zero, volScale, minCooldown, Mode.Source) : false;
+        => source ? PlayInternal(key, source, Vector3.zero, volScale, minCooldown, Mode.Source, 1f, 0f) : false;
 
+    
+    public bool PlayAtSourceWithPitch(
+        string key,
+        Transform source,
+        float volScale,
+        float pitchScale,
+        float minCooldown = -1f,
+        float extraPitchJitter = 0.05f
+    )
+    {
+        if (!source) return false;
+        return PlayInternal(key, source, Vector3.zero, volScale, minCooldown, Mode.Source, pitchScale, extraPitchJitter);
+    }
+
+    
     public bool PlayAtObject(string key, GameObject go, float volScale = 1f, float minCooldown = -1f)
         => go ? PlayAtSource(key, go.transform, volScale, minCooldown) : false;
 
@@ -120,7 +135,7 @@ public class suin_SoundManager : MonoBehaviour
     // --- 내부 ---
     private enum Mode { Global, Position, Source }
 
-    private bool PlayInternal(string key, Transform srcTransform, Vector3 pos, float volScale, float minCooldown, Mode mode)
+    private bool PlayInternal(string key, Transform srcTransform, Vector3 pos, float volScale, float minCooldown, Mode mode,float pitchScale = 1f, float extraPitchJitter = 0f)
     {
         string groupPrefix = null;
 
@@ -179,8 +194,17 @@ public class suin_SoundManager : MonoBehaviour
         _lastPlay[key] = now;
 
         float v = Mathf.Clamp01(volume * volScale + Random.Range(-volumeJitter, volumeJitter));
-        float p = Mathf.Clamp(pitch + Random.Range(-pitchJitter, pitchJitter), 0.1f, 3f);
+
+        float basePitch = pitch * pitchScale;  // 🔹이벤트에서 오는 pitchScale 반영
+        float totalJitter = pitchJitter + extraPitchJitter;
+        float p = Mathf.Clamp(
+            basePitch + Random.Range(-totalJitter, totalJitter),
+            0.1f,
+            3f
+        );
+
         float dur = Mathf.Max(0.01f, clip.length / Mathf.Abs(p));
+
 
         if (!_playingCount.ContainsKey(key)) _playingCount[key] = 0;
         _playingCount[key]++;
