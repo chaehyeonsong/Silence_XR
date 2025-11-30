@@ -449,10 +449,13 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c620c33d239104028bbc88065abd3f3d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  lockToTarget: 0
   targetPoint: {fileID: 0}
   ceilingMoveSpeed: 1
+  chaseSpeedMultiplier: 2.5
   rotateSpeed: 10
   dropSpeed: 1
+  calmTimeout: 15
   ceilingLayer:
     serializedVersion: 2
     m_Bits: 128
@@ -461,13 +464,15 @@ MonoBehaviour:
   groundLayer:
     serializedVersion: 2
     m_Bits: 8
-  groundCheckDistance: 0.1
-  groundStickOffset: 0.05
+  groundCheckDistance: 0.7
+  groundStickOffset: 0.7
   dropHorizontalRadius: 1
   dropRotateDuration: 0.3
   webLine: {fileID: 6074839173948791753}
   keepWebFromDropStart: 1
   roofMesh: {fileID: 0}
+  spawnPoint: {fileID: 0}
+  returnArriveRadius: 0.2
   useRandomWander: 1
   wanderDirChangeInterval: 2
 --- !u!1 &6074839172118150930
