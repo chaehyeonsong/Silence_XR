@@ -281,7 +281,7 @@ Transform:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 6074839172118150928}
-  m_LocalRotation: {x: 0.22238006, y: 0.6712281, z: -0.6712281, w: 0.22238}
+  m_LocalRotation: {x: 0.22237775, y: 0.6712288, z: -0.6712288, w: 0.22237775}
   m_LocalPosition: {x: -21.175282, y: 3.869653, z: -21.81022}
   m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 0
@@ -290,7 +290,7 @@ Transform:
   - {fileID: 6074839172118307636}
   m_Father: {fileID: 0}
   m_RootOrder: 0
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+  m_LocalEulerAnglesHint: {x: 90, y: 0, z: -143.34}
 --- !u!111 &6074839172107085520
 Animation:
   m_ObjectHideFlags: 0
@@ -449,24 +449,32 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c620c33d239104028bbc88065abd3f3d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  lockToTarget: 0
   targetPoint: {fileID: 0}
-  ceilingMoveSpeed: 2
+  ceilingMoveSpeed: 1
+  chaseSpeedMultiplier: 2.5
   rotateSpeed: 10
   dropSpeed: 1
+  calmTimeout: 15
   ceilingLayer:
     serializedVersion: 2
     m_Bits: 128
-  ceilingCheckDistance: 0.1
+  ceilingCheckDistance: 3
   ceilingStickOffset: 0.001
   groundLayer:
     serializedVersion: 2
     m_Bits: 8
-  groundCheckDistance: 0.1
-  groundStickOffset: 0.05
+  groundCheckDistance: 0.7
+  groundStickOffset: 0.7
   dropHorizontalRadius: 1
   dropRotateDuration: 0.3
   webLine: {fileID: 6074839173948791753}
   keepWebFromDropStart: 1
+  roofMesh: {fileID: 0}
+  spawnPoint: {fileID: 0}
+  returnArriveRadius: 0.2
+  useRandomWander: 1
+  wanderDirChangeInterval: 2
 --- !u!1 &6074839172118150930
 GameObject:
   m_ObjectHideFlags: 0
