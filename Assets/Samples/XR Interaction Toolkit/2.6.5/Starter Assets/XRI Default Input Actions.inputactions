@@ -443,6 +443,24 @@
                     "processors": "",
                     "interactions": "",
                     "initialStateCheck": true
+                },
+                {
+                    "name": "Left_primary",
+                    "type": "Button",
+                    "id": "b04e9542-0ee9-4ebc-bf17-6e2c63db4728",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Left_secondary",
+                    "type": "Button",
+                    "id": "2f5f8646-0c7b-4dd6-b3ff-e21b5a413243",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
                 }
             ],
             "bindings": [
@@ -674,6 +692,28 @@
                     "processors": "",
                     "groups": "Generic XR Controller",
                     "action": "Grip Rotation",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "a48e29f3-c60d-4298-8f02-8327ace749b1",
+                    "path": "<XRController>{LeftHand}/primaryButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Left_primary",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "884681d5-b4c3-4e24-8f73-f880e3233d69",
+                    "path": "<XRController>{LeftHand}/secondaryButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Left_secondary",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }
@@ -1241,9 +1281,18 @@
                     "initialStateCheck": true
                 },
                 {
-                    "name": "Skip",
+                    "name": "Right_primary",
                     "type": "Button",
-                    "id": "8d802505-845c-4bf5-9397-11d79f7ac0d1",
+                    "id": "ead53bfb-3f4a-468e-a24b-9d0d363eea2c",
+                    "expectedControlType": "Button",
+                    "processors": "",
+                    "interactions": "",
+                    "initialStateCheck": false
+                },
+                {
+                    "name": "Right_secondary",
+                    "type": "Button",
+                    "id": "ee5ddf18-6729-4c79-bf5e-969064516e66",
                     "expectedControlType": "Button",
                     "processors": "",
                     "interactions": "",
@@ -1484,12 +1533,23 @@
                 },
                 {
                     "name": "",
-                    "id": "5c90b9a2-6cdb-4724-8af7-23260dd4f071",
+                    "id": "614b94eb-79f6-479d-969e-e48ecb09128f",
                     "path": "<XRController>{RightHand}/primaryButton",
                     "interactions": "",
                     "processors": "",
                     "groups": "",
-                    "action": "Skip",
+                    "action": "Right_primary",
+                    "isComposite": false,
+                    "isPartOfComposite": false
+                },
+                {
+                    "name": "",
+                    "id": "49ea9131-4449-45aa-94af-45bbeb6c798f",
+                    "path": "<XRController>{RightHand}/secondaryButton",
+                    "interactions": "",
+                    "processors": "",
+                    "groups": "",
+                    "action": "Right_secondary",
                     "isComposite": false,
                     "isPartOfComposite": false
                 }

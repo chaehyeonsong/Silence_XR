@@ -42,22 +42,6 @@ namespace SoftKitty.LiquidContainer
         public float FollowSpeed = 0.5F;
         public float FollowWave = 1F;
         #endregion
-        
-        // LiquidControl.cs 내부, 클래스 필드/프로퍼티 부분에 추가
-        public float FlowSize => flow_size;
-        
-        // "지금 물이 실제로 흐르고 있는가?" 상태 헬퍼
-        public bool IsPouring
-        {
-            get
-            {
-                return Opened &&
-                       !isCorkSet() &&
-                       WaterLine > 0f &&
-                       flow_size > 0.01f;
-            }
-        }
-
 
         #region Internal Variables
         LineRenderer LiquidFlow;

@@ -8,15 +8,9 @@ public class suin_SoundManager : MonoBehaviour
 {
     public static suin_SoundManager instance { get; private set; }
 
-    // 🔹 key 하나에 여러 AudioClip을 달 수 있게 변경
-    [System.Serializable]
-    public class NamedClip
-    {
-        public string key;
-        public List<AudioClip> clips = new List<AudioClip>();
-    }
+    [System.Serializable] public class NamedClip { public string key; public AudioClip clip; }
 
-    [Header("Clips (key별로 여러 Clip 지원)")]
+    [Header("Clips")]
     public List<NamedClip> clips = new List<NamedClip>();
 
     [Header("Audio Settings")]
@@ -34,17 +28,17 @@ public class suin_SoundManager : MonoBehaviour
     public float pitch = 1.0f;
     public float pitchJitter = 0.0f;
 
-    // key -> clips[]
-    private Dictionary<string, List<AudioClip>> _map;
+    // key -> clip
+    private Dictionary<string, AudioClip> _map;
     // key -> last played time
     private Dictionary<string, float> _lastPlay;
     // key -> how many currently playing
     private Dictionary<string, int> _playingCount;
 
-    // 🔸 random:prefix 그룹 독점 재생 지원 (기존 기능 유지)
+    // 🔸 random:prefix 그룹 독점 재생 지원
     // prefix -> how many currently playing in the group
     private Dictionary<string, int> _playingGroupCount;
-    // prefix -> last play time (원하면 그룹 쿨다운에 활용 가능)
+    // (원하면 group 쿨다운도 추가 가능) prefix -> last play time
     private Dictionary<string, float> _lastPlayGroup;
 
     private class Voice
@@ -54,8 +48,8 @@ public class suin_SoundManager : MonoBehaviour
     }
     private List<Voice> _voices;
 
-    public const float FLAG_IGNORE_IF_PLAYING = -1f; // 기본값: 재생 중이면 무시
-    public const float FLAG_ALLOW_OVERLAP     = -2f; // 재생 중이어도 겹쳐 재생
+    private const float FLAG_IGNORE_IF_PLAYING = -1f; // 기본값: 재생 중이면 무시
+    private const float FLAG_ALLOW_OVERLAP     = -2f; // 재생 중이어도 겹쳐 재생
 
     void Awake()
     {
@@ -93,48 +87,26 @@ public class suin_SoundManager : MonoBehaviour
     }
 #endif
 
-    // 🔹 Inspector의 clips 리스트 → 내부 Dictionary<string, List<AudioClip>>
     private void BuildMapFromClips()
     {
-        if (_map == null) _map = new Dictionary<string, List<AudioClip>>();
+        if (_map == null) _map = new Dictionary<string, AudioClip>();
         _map.Clear();
-
         foreach (var nc in clips)
         {
-            if (nc == null) continue;
-            if (string.IsNullOrEmpty(nc.key)) continue;
-            if (nc.clips == null || nc.clips.Count == 0) continue;
-
-            // null 아닌 것만 필터링
-            var valid = nc.clips.Where(c => c != null).ToList();
-            if (valid.Count == 0) continue;
-
-            _map[nc.key] = valid;
+            if (nc != null && nc.clip && !string.IsNullOrEmpty(nc.key))
+                _map[nc.key] = nc.clip;
         }
     }
 
-    // --- 공용 API (외부에서 쓰는 것은 그대로) ---
+    // --- 공용 API (변경 없음) ---
     public bool Play(string key, float volScale = 1f, float minCooldown = -1f)
-        => PlayInternal(key, null, Vector3.zero, volScale, minCooldown, Mode.Global, 1f, 0f);
+        => PlayInternal(key, null, Vector3.zero, volScale, minCooldown, Mode.Global);
 
     public bool PlayAtPosition(string key, Vector3 pos, float volScale = 1f, float minCooldown = -1f)
-        => PlayInternal(key, null, pos, volScale, minCooldown, Mode.Position, 1f, 0f);
+        => PlayInternal(key, null, pos, volScale, minCooldown, Mode.Position);
 
     public bool PlayAtSource(string key, Transform source, float volScale = 1f, float minCooldown = -1f)
-        => source ? PlayInternal(key, source, Vector3.zero, volScale, minCooldown, Mode.Source, 1f, 0f) : false;
-
-    public bool PlayAtSourceWithPitch(
-        string key,
-        Transform source,
-        float volScale,
-        float pitchScale,
-        float minCooldown = -1f,
-        float extraPitchJitter = 0.05f
-    )
-    {
-        if (!source) return false;
-        return PlayInternal(key, source, Vector3.zero, volScale, minCooldown, Mode.Source, pitchScale, extraPitchJitter);
-    }
+        => source ? PlayInternal(key, source, Vector3.zero, volScale, minCooldown, Mode.Source) : false;
 
     public bool PlayAtObject(string key, GameObject go, float volScale = 1f, float minCooldown = -1f)
         => go ? PlayAtSource(key, go.transform, volScale, minCooldown) : false;
@@ -148,32 +120,23 @@ public class suin_SoundManager : MonoBehaviour
     // --- 내부 ---
     private enum Mode { Global, Position, Source }
 
-    private bool PlayInternal(
-        string key,
-        Transform srcTransform,
-        Vector3 pos,
-        float volScale,
-        float minCooldown,
-        Mode mode,
-        float pitchScale = 1f,
-        float extraPitchJitter = 0f
-    )
+    private bool PlayInternal(string key, Transform srcTransform, Vector3 pos, float volScale, float minCooldown, Mode mode)
     {
         string groupPrefix = null;
 
-        // ✅ random:prefix → prefix 그룹에서 "key"를 랜덤 선택 (기존 기능 유지)
+        // ✅ random:prefix → prefix 그룹 독점 재생
         if (!string.IsNullOrEmpty(key) && key.StartsWith("random:"))
         {
             groupPrefix = key.Substring("random:".Length);
 
-            // 현재 그룹이 재생 중이면 전체 차단 (독점 그룹)
+            // 현재 그룹이 재생 중이면 전체 차단
             if (!string.IsNullOrEmpty(groupPrefix) &&
                 _playingGroupCount.TryGetValue(groupPrefix, out int gcnt) && gcnt > 0)
             {
                 return false;
             }
 
-            // 후보 수집 (prefix로 시작하는 key들)
+            // 후보 수집 (prefix로 시작)
             if (_map == null || _map.Count == 0) return false;
             var candidates = _map.Keys.Where(k => k.StartsWith(groupPrefix)).ToList();
             if (candidates.Count == 0) return false;
@@ -181,12 +144,7 @@ public class suin_SoundManager : MonoBehaviour
             key = candidates[Random.Range(0, candidates.Count)];
         }
 
-        // 🔹 여기서 key 하나에 대해 여러 clip 중 하나를 랜덤 선택
-        if (_map == null || !_map.TryGetValue(key, out var clipList) || clipList == null || clipList.Count == 0)
-            return false;
-
-        var clip = clipList[Random.Range(0, clipList.Count)];
-        if (!clip) return false;
+        if (_map == null || !_map.TryGetValue(key, out var clip) || !clip) return false;
 
         float now = Time.unscaledTime;
 
@@ -221,15 +179,7 @@ public class suin_SoundManager : MonoBehaviour
         _lastPlay[key] = now;
 
         float v = Mathf.Clamp01(volume * volScale + Random.Range(-volumeJitter, volumeJitter));
-
-        float basePitch = pitch * pitchScale;
-        float totalJitter = pitchJitter + extraPitchJitter;
-        float p = Mathf.Clamp(
-            basePitch + Random.Range(-totalJitter, totalJitter),
-            0.1f,
-            3f
-        );
-
+        float p = Mathf.Clamp(pitch + Random.Range(-pitchJitter, pitchJitter), 0.1f, 3f);
         float dur = Mathf.Max(0.01f, clip.length / Mathf.Abs(p));
 
         if (!_playingCount.ContainsKey(key)) _playingCount[key] = 0;
@@ -277,7 +227,6 @@ public class suin_SoundManager : MonoBehaviour
             src.volume = v;
 
             if (mode == Mode.Position) src.transform.position = pos;
-            if (mode == Mode.Source && srcTransform != null) src.transform.position = srcTransform.position;
 
             src.clip = clip;
             src.Play();

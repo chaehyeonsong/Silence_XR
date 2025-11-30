@@ -84,7 +84,7 @@ public class GameOverController : MonoBehaviour
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.G))   // DEBUG: press G to test
+        if (Input.GetKeyDown(KeyCode.K))   // DEBUG: press G to test
         {
             TriggerGameOver();
         }

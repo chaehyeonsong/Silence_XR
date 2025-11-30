@@ -26,8 +26,6 @@ public class suin_ControllerAccelSound : MonoBehaviour
     [Range(0f, 1f)] public float jerkHysRatio = 0.6f; // 하한 = 상한 * ratio
 
     [Header("Speed Band Gate (m/s)")]
-    [Tooltip("move slight flag threshold")]
-    public float slight_flag_threshold = 0.005f;
     [Tooltip("속도 밴드 하한(이상)")]
     public float speedMin = 0.08f;
     [Tooltip("속도 밴드 상한(이하). 0 or 음수면 상한 무시")]
@@ -42,12 +40,7 @@ public class suin_ControllerAccelSound : MonoBehaviour
     [Header("Smoothing (EMA)")]
     [Range(0f, 1f)] public float alphaVel = 0.35f;
     [Range(0f, 1f)] public float alphaAcc = 0.35f;
-    
-    // 🔹 speed로 볼륨을 얼마나 "미세"하게 흔들지 (예: 0.1 이면 ±10% 이내)
-    [Range(0f, 0.5f)]
-    public float maxSpeedVolumeDelta = 0.1f;
 
-    
     [Header("Debug")]
     public bool showDebug = false;
 
@@ -146,11 +139,6 @@ public class suin_ControllerAccelSound : MonoBehaviour
             // --- 속도 크기 ---
             float speed = velSmooth.magnitude;
 
-            if (speed > slight_flag_threshold) // TODO : finetune
-            {
-                suin_FlagHub.instance.SetMoveSlightFlag(true);
-            }
-
             // ===== JERK 히스테리시스 =====
             float jerkLower = jerkUpper * Mathf.Clamp01(jerkHysRatio);
             if (jerkMag >= jerkUpper) _jerkLoud[i] = true;
@@ -174,18 +162,15 @@ public class suin_ControllerAccelSound : MonoBehaviour
             if (_jerkLoud[i] && _speedIn[i] && (Time.time - _lastPlay[i] >= cooldown))
             {
                 float vol = ComputeVolume(jerkMag, jerkUpper, speed, speedMin, speedMax);
-                float pitchScale = ComputePitchScale(jerkMag, jerkUpper, speed, speedMin, speedMax);
-
-                if (suin_SoundManager.instance.PlayAtSourceWithPitch(soundKey, t, vol, pitchScale, -1f))
+                if (suin_SoundManager.instance.PlayAtSource(soundKey, t, vol, -1f))
                 {
-                    suin_FlagHub.instance.SetPlayerSoundFlag(true);
                     _lastPlay[i] = Time.time;
                     if (showDebug)
-                        Debug.Log($"[AccelSound] {t.name} jerk={jerkMag:F1} speed={speed:F2} vol={vol:F2} pitchScale={pitchScale:F2}");
+                        Debug.Log($"[AccelSound] {t.name} jerk={jerkMag:F1} speed={speed:F2} vol={vol:F2}");
                     break;
                 }
+                
             }
-
 
             // --- 상태 갱신 ---
             _prevPos[i] = pos;
@@ -197,62 +182,22 @@ public class suin_ControllerAccelSound : MonoBehaviour
         }
     }
 
-    /// 볼륨 = base * jerkFactor * speedFactor
-    /// - jerkFactor : jerk 초과량에 비례 (메인 드라이버)
-    /// - speedFactor: 속도 밴드 내 위치에 따른 ±미세 변화
+    /// <summary>
+    /// 볼륨 = base * (1 + wJerk*excessJerk + wSpeed*speedNorm), clamp(…, maxVolumeScale)
+    ///  - excessJerk = max(0, jerk/jerkUpper - 1)
+    ///  - speedNorm: 속도 밴드 내 0~1 정규화(상한이 없으면 하한 기준 1로 수렴)
+    /// </summary>
     private float ComputeVolume(float jerk, float jerkUp, float speed, float sMin, float sMax)
     {
-        // --- jerk 쪽 (예전과 비슷하게 유지) ---
-        float jerkNorm = jerk / Mathf.Max(1e-6f, jerkUp);    // 1 이상이면 threshold 초과
-        float excessJerk = Mathf.Max(0f, jerkNorm - 1f);     // 0 이상
-
-        float jerkFactor = 1f + jerkVolumeWeight * excessJerk;
-
-        // --- speed 쪽 (아주 미세하게) ---
-        float speedNorm = 0f;
+        float excessJerk = Mathf.Max(0f, jerk / Mathf.Max(1e-6f, jerkUp) - 1f); // 0 이상
+        float speedNorm  = 0f;
         if (sMax > 0f && sMax > sMin)
             speedNorm = Mathf.Clamp01((speed - sMin) / (sMax - sMin));
         else
-            speedNorm = Mathf.Clamp01(speed / Mathf.Max(1e-6f, sMin * 2f));
+            speedNorm = Mathf.Clamp01(speed / Mathf.Max(1e-6f, sMin * 2f)); // 상한이 없으면 대략적 증가
 
-        // 0~1 → -0.5~+0.5 로 가운데를 기준으로 이동
-        float centered = speedNorm - 0.5f;   // -0.5 ~ +0.5
-
-        // speedVolumeWeight * maxSpeedVolumeDelta 만큼만 영향 주기
-        // 예) maxSpeedVolumeDelta=0.1, speedVolumeWeight=0.5 → 최대 ±0.05 (±5%) 볼륨 변화
-        float speedOffset = centered * 2f * maxSpeedVolumeDelta * speedVolumeWeight;
-        float speedFactor = 1f + speedOffset;    // 대략 0.95 ~ 1.05 정도
-
-        // --- 통합 ---
-        float scale = jerkFactor * speedFactor;
+        float scale = 1f + jerkVolumeWeight * excessJerk + speedVolumeWeight * speedNorm;
         scale = Mathf.Clamp(scale, 0.1f, maxVolumeScale);
-
         return baseVolume * scale;
     }
-    
-    /// <summary>
-    /// jerk/speed 기반 pitch scale 계산
-    /// - jerk가 클수록 약간 더 높은 pitch
-    /// - speed가 밴드 상단쪽일수록 살짝 더 높게
-    /// </summary>
-    private float ComputePitchScale(float jerk, float jerkUp, float speed, float sMin, float sMax)
-    {
-        // 0~1 정규화
-        float jerkNorm = Mathf.Clamp01(jerk / Mathf.Max(1e-6f, jerkUp)); 
-
-        float speedNorm = 0f;
-        if (sMax > 0f && sMax > sMin)
-            speedNorm = Mathf.Clamp01((speed - sMin) / (sMax - sMin));
-        else
-            speedNorm = Mathf.Clamp01(speed / Mathf.Max(1e-6f, sMin * 2f));
-
-        // 기본 1.0에서 ±0.2 정도만 흔들기 (너무 크면 짜증나게 들림)
-        float pitch = 1.0f
-                      + 0.20f * jerkNorm      // jerk 세면 더 날카롭게
-                      + 0.10f * speedNorm;    // 빠르게 움직이면 약간 더 높게
-
-        // 안전 클램프
-        return Mathf.Clamp(pitch, 0.85f, 1.35f);
-    }
-
 }

@@ -30,6 +30,14 @@ public class MainMenuController : MonoBehaviour
     [Header("Scene")]
     [SerializeField] private string gameSceneName = "Level_opening2"; // 실제 씬 명으로 변경
 
+    [Header("GameController")]
+    [SerializeField] private GameObject GameController;
+
+    [Header("GamePrefab")]
+    [SerializeField] private GameObject gamePrefab;
+
+    private GameController gameController;
+
     private void Awake()
     {
         // Debug.Log("MainMenuController Awake");
@@ -132,10 +140,61 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
-    public void OnClickStartGame()
+    public void OnClickStartEasyGame()
     {
-        if (!string.IsNullOrEmpty(gameSceneName))
-            SceneManager.LoadScene(gameSceneName);
+        //if (!string.IsNullOrEmpty(gameSceneName))
+        //    SceneManager.LoadScene(gameSceneName);
+
+        gamePrefab.SetActive(true);
+        gameController = GameController.GetComponent<GameController>();
+        gameController.Linetracer_difficulty = "easy";
+        gameController.Liquid_difficulty = "easy";
+        gameController.GameSetup();
+
+        transform.Find("Displayed").gameObject.SetActive(false);
+
+    }
+
+    public void OnClickStartNormalGame()
+    {
+        //if (!string.IsNullOrEmpty(gameSceneName))
+        //    SceneManager.LoadScene(gameSceneName);
+
+        gamePrefab.SetActive(true);
+        gameController = GameController.GetComponent<GameController>();
+        gameController.Linetracer_difficulty = "normal";
+        gameController.Liquid_difficulty = "normal";
+        gameController.GameSetup();
+
+        transform.Find("Displayed").gameObject.SetActive(false);
+    }
+
+    public void OnClickStartHardGame()
+    {
+        //if (!string.IsNullOrEmpty(gameSceneName))
+        //    SceneManager.LoadScene(gameSceneName);
+
+        gamePrefab.SetActive(true);
+        gameController = GameController.GetComponent<GameController>();
+        gameController.Linetracer_difficulty = "hard";
+        gameController.Liquid_difficulty = "hard";
+        gameController.GameSetup();
+
+        transform.Find("Displayed").gameObject.SetActive(false);
+    }
+
+    public void OnClickStartInsaneGame()
+    {
+        //if (!string.IsNullOrEmpty(gameSceneName))
+        //    SceneManager.LoadScene(gameSceneName);
+
+        gamePrefab.SetActive(true);
+        gameController = GameController.GetComponent<GameController>();
+        gameController.Linetracer_difficulty = "insane";
+        gameController.Liquid_difficulty = "insane";
+        gameController.GameSetup();
+
+        transform.Find("Displayed").gameObject.SetActive(false);
     }
 
     public void OnClickOpenAbout()
