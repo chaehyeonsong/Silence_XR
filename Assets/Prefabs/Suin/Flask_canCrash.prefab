@@ -398,6 +398,10 @@ MonoBehaviour:
   shardUseGravity: 1
   shardRandomVelocity: 1.5
   shardRandomAngularVelocity: 1
+  impactSoundVelocityThreshold: 1
+  impactClip: {fileID: 8300000, guid: 3da4c63abac5fb54d8d9b37fc492ba07, type: 3}
+  impactVolume: 1
+  impactSoundCooldown: 0.1
   breakClip: {fileID: 8300000, guid: 4bbdc8dbce97ca544a04ffdd3b809b90, type: 3}
   breakVolume: 1
   autoDestroyShards: 0
