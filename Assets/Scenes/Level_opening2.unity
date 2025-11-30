@@ -179,7 +179,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 4783640734071882596, guid: e4e62b6a87d41b745b10d224f2436f15, type: 3}
       propertyPath: m_LocalPosition.y
-      value: -1.25
+      value: -0.601
       objectReference: {fileID: 0}
     - target: {fileID: 4783640734071882596, guid: e4e62b6a87d41b745b10d224f2436f15, type: 3}
       propertyPath: m_LocalPosition.z
@@ -366,7 +366,7 @@ VideoPlayer:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 959942277}
   m_Enabled: 1
-  m_VideoClip: {fileID: 32900000, guid: 0c095a7a2e0864a88ac790500ec45cf1, type: 3}
+  m_VideoClip: {fileID: 32900000, guid: e083ca1e3c9234f6c8a940be875e8ac9, type: 3}
   m_TargetCameraAlpha: 1
   m_TargetCamera3DLayout: 0
   m_TargetCamera: {fileID: 0}
@@ -497,7 +497,7 @@ Canvas:
   m_Enabled: 1
   serializedVersion: 3
   m_RenderMode: 0
-  m_Camera: {fileID: 0}
+  m_Camera: {fileID: 1269371192}
   m_PlaneDistance: 100
   m_PixelPerfect: 0
   m_ReceivesEvents: 1
@@ -696,6 +696,11 @@ PrefabInstance:
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 4d41517b02a47d64cab8c94f1fad6c1d, type: 3}
+--- !u!20 &1269371192 stripped
+Camera:
+  m_CorrespondingSourceObject: {fileID: 6175984803925318205, guid: e4e62b6a87d41b745b10d224f2436f15, type: 3}
+  m_PrefabInstance: {fileID: 244824112}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &2104535931 stripped
 GameObject:
   m_CorrespondingSourceObject: {fileID: 4222869203217712169, guid: 4d41517b02a47d64cab8c94f1fad6c1d, type: 3}
