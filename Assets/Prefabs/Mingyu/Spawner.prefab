@@ -46,27 +46,23 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   zombieSpawnPoints:
   - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
-  - {fileID: 0}
   spiderSpawnPoints:
-  - {fileID: 0}
-  - {fileID: 0}
   - {fileID: 0}
   zombiePrefab: {fileID: 7701790610250628047, guid: 9574f246aa52d4f5685ee9b05dda0c99, type: 3}
   spiderPrefab: {fileID: 6074839172118150928, guid: 14716b21f16c94df78c0d33c3bbf5f30, type: 3}
-  spawnInterval: 5
+  spawnInterval: 2
   zombieSpawnChance: 0.5
+  firstSpawnChance: 0.5
+  secondSpawnChance: 0.75
+  thirdSpawnChance: 1
   zombieTargetPoint: {fileID: 0}
   spiderTargetPoint: {fileID: 0}
-  maxMonsters: 4
+  maxMonsters: 1
   spiderRoofMesh: {fileID: 0}
   spiderCeilingLayer:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 128
   spiderGroundLayer:
     serializedVersion: 2
-    m_Bits: 0
+    m_Bits: 8
   zombieWanderAreaMesh: {fileID: 0}
