@@ -19,6 +19,8 @@ public class GameOverController : MonoBehaviour
     {
         if (!running)
             StartCoroutine(GameOverSequence());
+             // Play sounds
+            FindObjectOfType<GameOverAudio>().PlayGameOverSounds();
     }
 
     // turn off gameover rig
@@ -74,6 +76,10 @@ public class GameOverController : MonoBehaviour
     public void OnPlayAgain()
     {
         GameManager.Instance.BackToOpening();
+         // stop sounds
+        var audio = FindObjectOfType<GameOverAudio>();
+        if (audio != null)
+            audio.StopGameOverSounds();
     }
 
     void Update()
