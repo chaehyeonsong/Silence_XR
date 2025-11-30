@@ -14576,7 +14576,7 @@ SphereCollider:
   m_IsTrigger: 1
   m_Enabled: 0
   serializedVersion: 2
-  m_Radius: 0.020749563
+  m_Radius: 0.020553686
   m_Center: {x: 0, y: 0, z: 0}
 --- !u!1 &4047752212221990069
 GameObject:
@@ -14793,6 +14793,7 @@ GameObject:
   - component: {fileID: 1575131129077233812}
   - component: {fileID: 1575131129077233821}
   - component: {fileID: 1575131129077233820}
+  - component: {fileID: 8708726936305632871}
   m_Layer: 0
   m_Name: Flask
   m_TagString: Untagged
@@ -14881,20 +14882,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e8ee68858aa386142bf24d710d801886, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  isMobile: 0
+  isMobile: 1
   ShowOpenningHelper: 1
   Opened: 1
   WaterLineOffset: {x: 0, y: 0}
   LiquidMeshFilter: {fileID: 5097916208516136367}
-  WaterLine: 0.306191
+  WaterLine: 0
   FlowOutSpeed: 0.48677248
   ContainerMouth: {fileID: 4047752212093271091}
-  OpenningRadius: 0.020749563
+  OpenningRadius: 0.020553686
   FlowHitMask:
     serializedVersion: 2
     m_Bits: 1
   FlowLengthLimit: 1.1212993
-  hasFlowPonding: 1
+  hasFlowPonding: 0
   PondingSize: 2
   canRecive: 1
   VolumnOfCube: 0.46664
@@ -14937,7 +14938,7 @@ Rigidbody:
   m_IsKinematic: 0
   m_Interpolate: 1
   m_Constraints: 0
-  m_CollisionDetection: 0
+  m_CollisionDetection: 3
 --- !u!114 &1575131129077233812
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -15148,3 +15149,17 @@ MonoBehaviour:
   volumeSensitivity: 0.15
   maxMotionVolumeScale: 1.5
   showDebug: 0
+--- !u!114 &8708726936305632871
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 6153780650573113147}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: dce90168c04b8a74bb8ce9bb7a4bff8a, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: 
+  speedlimit: 2.5
+  Initial_immune_time: 0
