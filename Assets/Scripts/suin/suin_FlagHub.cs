@@ -184,9 +184,28 @@ public class suin_FlagHub : MonoBehaviour
     /// 누군가 죽어야 하는 상황이라고 알리는 플래그.
     /// 대상은 여기서 고르지 않고, OnPlayerKillFlag 구독자에서 처리.
     /// </summary>
+    // public void TriggerPlayerKillFlag()
+    // {
+    //     Debug.Log("🔥 [FlagHub] PlayerKillFlag TRIGGERED (죽음 플래그 발생)");
+    //     OnPlayerKillFlag?.Invoke();
+    // }
+
     public void TriggerPlayerKillFlag()
     {
         Debug.Log("🔥 [FlagHub] PlayerKillFlag TRIGGERED (죽음 플래그 발생)");
+        
+        // 1. 혹시 모를 다른 구독자들을 위해 이벤트 유지
         OnPlayerKillFlag?.Invoke();
+
+        // 2. GameManager에게 직접 명령 (Direct Call)
+        if (GameManager.Instance != null)
+        {
+            Debug.Log("👉 [FlagHub] GameManager에게 Game Over 전환 요청 보냄");
+            GameManager.Instance.TriggerGameOver(); // -> 이게 SetState(GameOver)를 부름
+        }
+        else
+        {
+            Debug.LogError("❌ [FlagHub] GameManager Instance가 없습니다!");
+        }
     }
 }

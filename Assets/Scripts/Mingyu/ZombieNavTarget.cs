@@ -2,7 +2,7 @@ using UnityEngine;
 using UnityEngine.AI;
 
 [RequireComponent(typeof(NavMeshAgent))]
-[RequireComponent(typeof(AudioSource))] // 🔥 추가: AudioSource 필수
+[RequireComponent(typeof(AudioSource))]
 public class ZombieNavTarget : MonoBehaviour
 {
     [Header("Kill Flag Lock")]
@@ -14,8 +14,8 @@ public class ZombieNavTarget : MonoBehaviour
     private float initialSpeed;              // 원래 속도 저장용
 
     [Header("Audio Settings")] 
-    public AudioClip chaseSound;             // 🔥 추가: 달려들 때 재생할 사운드 (괴음 등)
-    private AudioSource audioSource;         // 🔥 추가: 오디오 소스 참조
+    public AudioClip chaseSound;             // 달려들 때 재생할 사운드
+    private AudioSource audioSource;         
 
     [Header("Calm Return Settings")]
     public float calmTimeout = 15f;          // flag 없으면 이 시간 뒤 귀환
@@ -25,60 +25,61 @@ public class ZombieNavTarget : MonoBehaviour
     public Transform targetPoint;            // 좀비가 달려갈 목적지
     public float arriveDistance = 0.35f;     // 도착 판정 거리
 
+    // ==========================================
+    // ▼▼▼ 여기에 변수가 선언되어 있습니다 ▼▼▼
+    // ==========================================
+    [Header("Game Over Settings")]
+    [Tooltip("이 거리 안에 들어오면 게임오버 발동")]
+    public float killTriggerDistance = 1.0f; // 🔥 인스펙터에 보여야 함
+    private bool hasTriggeredGameOver = false; // 중복 호출 방지용
+
     [Header("Idle Wander Settings (경계 전 상태)")]
     public bool useRandomWander = true;      // Alert 전 랜덤 배회할지 여부
 
     [Tooltip("wanderAreaMesh가 없을 때 사용할 반경 (초기 위치 기준)")]
-    public float wanderRadius = 8f;          // Fallback 반경
-    public float wanderInterval = 8f;        // 새 목적지를 고르는 최소 간격(초)
+    public float wanderRadius = 8f;          
+    public float wanderInterval = 8f;        
 
     [Tooltip("새 wander 목적지가 현재 위치와 최소 이 정도는 떨어지도록 강제")]
-    public float minWanderDistance = 4f;     // 너무 짧은 이동 방지
+    public float minWanderDistance = 4f;     
 
-    [Header("Wander Area (옵션: 이 MeshRenderer bounds 안에서만 배회)")]
-    public MeshRenderer wanderAreaMesh;      // 바닥/방 MeshRenderer 넣어주면 됨
+    [Header("Wander Area (옵션)")]
+    public MeshRenderer wanderAreaMesh;      
 
-    [Header("Alert Settings (플래그 들어오면 추적 시작)")]
-    public bool useAlert = true;             // suin_FlagHub 플래그 연동 여부
+    [Header("Alert Settings")]
+    public bool useAlert = true;             
 
     [Header("Return Home Settings")]
-    [Tooltip("Spawner에서 주입되는 스폰 포인트")]
-    public Transform spawnPoint;             // 스폰 위치
+    public Transform spawnPoint;             
     public float returnArriveDistance = 0.3f;
 
     private NavMeshAgent agent;
-
-    // 플래그 관련
     private suin_FlagHub hub;
-    private bool isAlerted = false;          // 현재 Alert 상태 (허브에서 true/false 들어옴)
-
-    // 배회 관련
+    private bool isAlerted = false;          
     private Vector3 wanderCenter;
     private float wanderTimer = 0f;
-
-    // Calm 이후 집에 돌아가는 상태
     private bool isReturningHome = false;
 
     void Awake()
     {
         agent = GetComponent<NavMeshAgent>();
-        audioSource = GetComponent<AudioSource>(); // 🔥 추가: 컴포넌트 가져오기
+        audioSource = GetComponent<AudioSource>();
 
-        // 초기 설정
-        agent.stoppingDistance = arriveDistance;
-        agent.autoRepath = true;
-        agent.obstacleAvoidanceType = ObstacleAvoidanceType.HighQualityObstacleAvoidance;
+        // NavMeshAgent가 없는 경우를 대비한 안전장치
+        if (agent != null)
+        {
+            agent.stoppingDistance = arriveDistance;
+            agent.autoRepath = true;
+            agent.obstacleAvoidanceType = ObstacleAvoidanceType.HighQualityObstacleAvoidance;
+            initialSpeed = agent.speed;
+        }
         
-        // 초기 속도 저장
-        initialSpeed = agent.speed;
-
         wanderCenter = transform.position;
     }
 
     void OnEnable()
     {
         if (!useAlert) return;
-
         hub = suin_FlagHub.instance;
         if (hub != null)
         {
@@ -91,7 +92,6 @@ public class ZombieNavTarget : MonoBehaviour
     void OnDisable()
     {
         if (!useAlert) return;
-
         if (hub != null)
         {
             hub.OnMoveSlightFlag -= OnAlertFlag;
@@ -100,12 +100,11 @@ public class ZombieNavTarget : MonoBehaviour
         }
     }
 
-    // 플래그 들어왔을 때 호출
     void OnAlertFlag(bool v)
     {
         if (!useAlert) return;
         if (isReturningHome) return;
-        if (lockToTarget) return;   // 🔒 죽는 플래그 이후에는 새 alert 무시
+        if (lockToTarget) return;   
 
         isAlerted = v;
 
@@ -117,8 +116,7 @@ public class ZombieNavTarget : MonoBehaviour
         }
         else if (!v && useRandomWander)
         {
-            // 경계 해제 시 잠시 멈춤 or 즉시 배회 로직으로 전환
-            agent.ResetPath();
+            if(agent != null) agent.ResetPath();
         }
     }
 
@@ -134,26 +132,37 @@ public class ZombieNavTarget : MonoBehaviour
     {
         if (agent == null) return;
 
-        // ─────────────────────────────────────────────────────────────
-        // 🔒 1. 죽는 플래그 (Lock Mode) - 최우선 순위
-        // ─────────────────────────────────────────────────────────────
+        // 1. 죽는 플래그 (Lock Mode)
         if (lockToTarget)
         {
-            // 다른 상태들 강제 리셋
             isReturningHome = false;
             isAlerted = true;
             noFlagTimer = 0f;
 
-            // 속도 증가 로직 적용
             agent.speed = initialSpeed * chaseSpeedMultiplier;
 
             if (targetPoint != null)
             {
                 float dist = Vector3.Distance(transform.position, targetPoint.position);
 
+                // ▼▼▼ 거리 체크 및 게임오버 실행 ▼▼▼
+                if (dist <= killTriggerDistance)
+                {
+                    if (!hasTriggeredGameOver)
+                    {
+                        hasTriggeredGameOver = true;
+                        Debug.Log($"🧟 [Zombie] 잡았다! 거리: {dist:F2} <= {killTriggerDistance} -> 게임오버 요청");
+
+                        if (suin_FlagHub.instance != null)
+                        {
+                            suin_FlagHub.instance.TriggerPlayerKillFlag();
+                        }
+                    }
+                }
+                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
                 if (dist <= arriveDistance)
                 {
-                    // 도착했으면 '완전 정지'
                     if (!agent.isStopped)
                     {
                         agent.isStopped = true;
@@ -163,23 +172,18 @@ public class ZombieNavTarget : MonoBehaviour
                 }
                 else
                 {
-                    // 이동
                     if (agent.isStopped) agent.isStopped = false;
                     agent.SetDestination(targetPoint.position);
                 }
             }
-            
             return; 
         }
         else
         {
-            // 🔒 Lock 상태가 아닐 때는 원래 속도로 복구
             agent.speed = initialSpeed;
         }
 
-        // ─────────────────────────────────────────────────────────────
-        // 2. Calm Check (플래그 끊김 -> 귀환 타이머)
-        // ─────────────────────────────────────────────────────────────
+        // 2. Calm Check
         noFlagTimer += Time.deltaTime;
 
         if (!isReturningHome && noFlagTimer >= calmTimeout && spawnPoint != null)
@@ -189,9 +193,7 @@ public class ZombieNavTarget : MonoBehaviour
             agent.ResetPath();
         }
 
-        // ─────────────────────────────────────────────────────────────
-        // 3. Return Home (집으로 귀환)
-        // ─────────────────────────────────────────────────────────────
+        // 3. Return Home
         if (isReturningHome)
         {
             if (spawnPoint == null)
@@ -211,9 +213,7 @@ public class ZombieNavTarget : MonoBehaviour
             return;
         }
 
-        // ─────────────────────────────────────────────────────────────
-        // 4. Alert Chase (추적 - 일반 경계)
-        // ─────────────────────────────────────────────────────────────
+        // 4. Alert Chase
         if (isAlerted && targetPoint != null)
         {
             agent.isStopped = false;
@@ -222,16 +222,13 @@ public class ZombieNavTarget : MonoBehaviour
             return;
         }
 
-        // ─────────────────────────────────────────────────────────────
-        // 5. Idle Wander (배회)
-        // ─────────────────────────────────────────────────────────────
+        // 5. Idle Wander
         if (useRandomWander)
         {
             IdleWander();
         }
         else
         {
-            // 배회 안 쓰는 좀비는 가만히 대기
             agent.isStopped = true;
         }
     }
@@ -239,12 +236,7 @@ public class ZombieNavTarget : MonoBehaviour
     public void SetTarget(Transform target)
     {
         targetPoint = target;
-
-        if (targetPoint == null)
-        {
-            Debug.LogWarning($"⚠️ {name} tried to SetTarget(null)");
-            return;
-        }
+        if (targetPoint == null) return;
 
         if (isAlerted || lockToTarget)
         {
@@ -252,10 +244,8 @@ public class ZombieNavTarget : MonoBehaviour
         }
     }
 
-    // 🔥 죽는 플래그에서 직접 호출할 메서드
     public void ForceLockToTarget(Transform target)
     {
-        // 이미 락이 걸려있으면 소리 중복 재생 방지 (원하면 제거 가능)
         bool wasLocked = lockToTarget;
 
         targetPoint = target;
@@ -264,7 +254,6 @@ public class ZombieNavTarget : MonoBehaviour
         isReturningHome = false;
         noFlagTimer = 0f;
 
-        // 즉시 이동 명령 & 속도 증가
         if (agent != null && target != null)
         {
             agent.speed = initialSpeed * chaseSpeedMultiplier;
@@ -273,19 +262,12 @@ public class ZombieNavTarget : MonoBehaviour
             agent.SetDestination(target.position);
         }
 
-        // 🔥 추가: 오디오 재생 (처음 락 걸릴 때만 재생)
         if (!wasLocked && audioSource != null)
         {
-            if (chaseSound != null)
-            {
-                audioSource.clip = chaseSound;
-            }
-            // 소리 재생 (이미 재생중이 아니라면, 혹은 강제 재생)
+            if (chaseSound != null) audioSource.clip = chaseSound;
             audioSource.Play();
-            Debug.Log($"🔊 {name} 추격 사운드 재생!");
         }
-        
-        Debug.Log($"🧟 {name} 강제 Lock 활성화! (타겟: {target.name}, 속도: {agent.speed})");
+        Debug.Log($"🧟 {name} ForceLock 활성화 (타겟: {target.name})");
     }
 
     void SetDestinationToTarget()
@@ -355,6 +337,7 @@ public class ZombieNavTarget : MonoBehaviour
 #if UNITY_EDITOR
     void OnDrawGizmosSelected()
     {
+        // 배회 범위 (초록)
         Gizmos.color = Color.green;
         if (wanderAreaMesh != null)
         {
@@ -368,6 +351,10 @@ public class ZombieNavTarget : MonoBehaviour
             Vector3 center = Application.isPlaying ? wanderCenter : transform.position;
             Gizmos.DrawWireSphere(center, wanderRadius);
         }
+
+        // 킬 트리거 범위 (빨강)
+        Gizmos.color = Color.red;
+        Gizmos.DrawWireSphere(transform.position, killTriggerDistance);
     }
 #endif
 }
