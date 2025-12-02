@@ -90,6 +90,37 @@ public class GameController : MonoBehaviour
         }
     }
 
+    private void Awake()
+    {
+        if (rightPrimary != null && rightPrimary.action != null)
+        {
+            rightPrimary.action.Enable();
+            rightPrimary.action.performed += RightPrimaryPressed;
+            rightPrimary.action.canceled += RightPrimaryReleased;
+        }
+
+        if (rightSecondary != null && rightSecondary.action != null)
+        {
+            rightSecondary.action.Enable();
+            rightSecondary.action.performed += RightSecondaryPressed;
+            rightSecondary.action.canceled += RightSecondaryReleased;
+        }
+
+        if (leftPrimary != null && leftPrimary.action != null)
+        {
+            leftPrimary.action.Enable();
+            leftPrimary.action.performed += LeftPrimaryPressed;
+            leftPrimary.action.canceled += LeftPrimaryReleased;
+        }
+
+        if (leftSecondary != null && leftSecondary.action != null)
+        {
+            leftSecondary.action.Enable();
+            leftSecondary.action.performed += LeftSecondaryPressed;
+            leftSecondary.action.canceled += LeftSecondaryReleased;
+        }
+    }
+
     private void OnDisable()
     {
         if (rightPrimary != null && rightPrimary.action != null)
@@ -123,12 +154,15 @@ public class GameController : MonoBehaviour
 
     private void RightPrimaryPressed(InputAction.CallbackContext context)
     {
+        Debug.Log("primary pressed");
         if (liquid_checker != null)
         {
+            Debug.Log("Wrong thing");
             com_check.Check_answer();
         }
         else
         {
+            Debug.Log("Proper thing");
             Play_game();
         }
     }

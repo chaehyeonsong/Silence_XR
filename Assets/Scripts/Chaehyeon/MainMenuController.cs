@@ -12,6 +12,7 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private GameObject panelTutorial;
     [SerializeField] private Vector3 panelPosition;
     [SerializeField] private List<GameObject> ToggledByHelp;
+    [SerializeField] private GameObject panelHelp;
 
     [Header("Main Menu Root")]
     [SerializeField] private GameObject mainMenuRoot;   // 시작 버튼 / 설명 버튼이 들어있는 루트 패널(또는 Canvas)
@@ -105,7 +106,8 @@ public class MainMenuController : MonoBehaviour
         if (skipAction != null && skipAction.action != null)
         {
             skipAction.action.performed -= OnSkipPerformed;
-            skipAction.action.Disable();
+            //skipAction.action.Disable(); //If this code runs, it disables entire XR right
+                                           //primary button input
         }
     }
 
@@ -167,7 +169,7 @@ public class MainMenuController : MonoBehaviour
 
             gamePrefab.SetActive(true);
             gameController.GameSetup();
-            mainMenuRoot.SetActive(false); // Turn off main menu
+            mainMenuRoot.SetActive(false);
             Destroy(Help);
 
         }
