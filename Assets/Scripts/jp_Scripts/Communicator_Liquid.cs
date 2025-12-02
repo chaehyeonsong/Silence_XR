@@ -12,8 +12,8 @@ public class Communicator_Liquid : MonoBehaviour
     public GameObject sign_prefab;
     [HideInInspector]
     public GameController gameController;
-    [Tooltip("How much position adjustment for next source flask placement")]
-    public Vector3 flask_adjustment;
+    [Tooltip("How much angular change for next source flask placement")]
+    public float flask_adjustment;
     [Tooltip("Where to place mixing flask")]
     public Vector3 mixing_flask_position;
     [HideInInspector]
@@ -22,12 +22,16 @@ public class Communicator_Liquid : MonoBehaviour
     public LiquidControl target_flask;
     [HideInInspector]
     public List<LiquidControl> source_flask_list;
-  
-    
+
+    private const float pi = Mathf.PI;
+    private float flask_adjustment_rad = 0f;
+
+
     void Start()
     {
         
     }
+        
 
     void Update()
     {
@@ -110,7 +114,8 @@ public class Communicator_Liquid : MonoBehaviour
             values.Add(value);
         }
 
-        Vector3 flask_movement = new Vector3();
+        flask_adjustment_rad = flask_adjustment * Mathf.Deg2Rad;
+        float flask_movement = 0f;
         bool isOdd = (num_flask & 1) == 1;
         bool isEven = (num_flask & 1) == 0;
 
@@ -120,10 +125,16 @@ public class Communicator_Liquid : MonoBehaviour
 
             if (isOdd)
             {
+                float init_angle = pi / 2 + flask_adjustment_rad * (num_flask - 1) / 2;
+                Debug.Log(init_angle * Mathf.Rad2Deg);
+
+                Vector3 temp_displacement = new Vector3(Mathf.Cos(flask_movement + init_angle)
+                                                        * Mathf.Abs(mixing_flask_position.z), 
+                                                        0f, (Mathf.Sin(flask_movement + init_angle)
+                                                        - 1) * Mathf.Abs(mixing_flask_position.z));
+
                 LiquidControl newFlask = Instantiate(empty_flask, transform.position +
-                                                 flask_movement - flask_adjustment * 
-                                                 (num_flask - 1) / 2, transform.rotation, 
-                                                 transform);
+                                                 temp_displacement, transform.rotation, transform);
                 source_flask_list.Add(newFlask);
                 newFlask.GetComponent<FlaskCollisionDetector>().Init(gameController);
                 newFlask.FillInLiquid(0.002f, randomColor, randomColor);
@@ -131,16 +142,22 @@ public class Communicator_Liquid : MonoBehaviour
 
             if (isEven)
             {
+                float init_angle = pi / 2 + flask_adjustment_rad / 2 + flask_adjustment_rad *
+                                   (num_flask / 2 - 1);
+
+                Vector3 temp_displacement = new Vector3(Mathf.Cos(flask_movement + init_angle)
+                                                        * Mathf.Abs(mixing_flask_position.z),
+                                                        0f, (Mathf.Sin(flask_movement + init_angle)
+                                                        - 1) * Mathf.Abs(mixing_flask_position.z));
+
                 LiquidControl newFlask = Instantiate(empty_flask, transform.position +
-                                                 flask_movement - flask_adjustment / 2
-                                                 - flask_adjustment * (num_flask / 2 - 1),
-                                                 transform.rotation, transform);
+                                                 temp_displacement, transform.rotation, transform);
                 source_flask_list.Add(newFlask);
                 newFlask.GetComponent<FlaskCollisionDetector>().Init(gameController);
                 newFlask.FillInLiquid(0.002f, randomColor, randomColor);
             }
 
-            flask_movement += flask_adjustment; //move instantiation position so no overlap
+            flask_movement -= flask_adjustment_rad; //move instantiation position so no overlap
 
             target += randomColor * ratios[i];
         }

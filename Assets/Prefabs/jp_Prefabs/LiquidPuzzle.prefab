@@ -47,7 +47,8 @@ MonoBehaviour:
   empty_flask: {fileID: 6153780650573113144, guid: a0ba133292d072b47bff39907b49172b, type: 3}
   sign_prefab: {fileID: 6288511892115888227, guid: 15815115c8e68c044a82d9719ef84ea3, type: 3}
   gameController: {fileID: 0}
-  flask_adjustment: {x: 0.3, y: 0, z: 0}
+  flask_adjustment: 38
   mixing_flask_position: {x: 0, y: 0, z: -0.3}
   target: {r: 0, g: 0, b: 0, a: 1}
   target_flask: {fileID: 0}
+  source_flask_list: []

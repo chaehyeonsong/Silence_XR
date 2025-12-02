@@ -236,9 +236,11 @@ public class GameController : MonoBehaviour
         }
     }
 
-    void GameSetup()//spawn flasks, liquid color puzzle, 
+    public void GameSetup()//spawn flasks, liquid color puzzle, 
     {
         liquid_puzzle = Instantiate(LiquidPuzzle, transform);
+        Vector3 offset = new Vector3(0f, 0f, -0.3f);
+        liquid_puzzle.transform.position += offset;
         com_liquid = liquid_puzzle.GetComponent<Communicator_Liquid>();
         com_liquid.gameController = this;
         com_liquid.GenerateNewGame(Liquid_difficulty);
@@ -248,7 +250,7 @@ public class GameController : MonoBehaviour
     void Start()
     {
         audioSource = this.GetComponent<AudioSource>();
-        GameSetup();
+        //GameSetup();
     }
 
     void Update()
