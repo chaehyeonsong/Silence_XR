@@ -257,6 +257,18 @@ public class GameController : MonoBehaviour
         speedticket = false;
     }
 
+    public void GameEndRestarter()
+    {
+        //Destroy GameEnding
+        Destroy(Linetracer);
+        Destroy(liquid_puzzle);
+        DestroyAllRemnants();
+        Destroy(liquid_checker);
+        GameSetup();
+        fail = false;
+        speedticket = false;
+    }
+
     void DestroyAllRemnants()
     {
         foreach (var flask in FindObjectsOfType<LiquidControl>())

@@ -778,7 +778,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1479075468790274521, guid: f81259b4a1f48f64db6aa7e64c407fad, type: 3}
       propertyPath: m_LocalPosition.z
-      value: -0.125
+      value: -0.171
       objectReference: {fileID: 0}
     - target: {fileID: 1479075468790274521, guid: f81259b4a1f48f64db6aa7e64c407fad, type: 3}
       propertyPath: m_LocalRotation.w
@@ -839,6 +839,10 @@ PrefabInstance:
     - target: {fileID: 5247604665964552149, guid: f81259b4a1f48f64db6aa7e64c407fad, type: 3}
       propertyPath: m_PokeConfiguration.m_ConstantValue.m_InteractionDepthOffset
       value: 0.02
+      objectReference: {fileID: 0}
+    - target: {fileID: 6425393266922194546, guid: f81259b4a1f48f64db6aa7e64c407fad, type: 3}
+      propertyPath: m_StaticEditorFlags
+      value: 127
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: f81259b4a1f48f64db6aa7e64c407fad, type: 3}
