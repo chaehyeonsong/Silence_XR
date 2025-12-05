@@ -48,6 +48,7 @@ public class GameController : MonoBehaviour
     public GameObject LiquidPuzzle;
     public GameObject LiquidChecker;
     public GameObject XR_main_camera;
+    public GameManager gameManager;
     [HideInInspector]
     public AudioSource audioSource;
     public InputActionReference rightPrimary;
@@ -363,7 +364,8 @@ public class GameController : MonoBehaviour
             {
                 if (com_check.result == true) // when color is good
                 {
-                    Debug.Log("Should move to end scene");
+                    gameManager.TriggerGameClear();
+                    Destroy(liquid_checker);
                 }
                 else //when color is bad
                 {

@@ -20,6 +20,7 @@ public class GameManager : MonoBehaviour
     [Header("UI / Rigs")]
     public GameObject openingCanvas;          // Opening UI Canvas
     public GameOverController gameOverCtrl;   // Game over arms + UI controller
+    public GameObject gameClearRig;
 
     void Awake()
     {
@@ -73,6 +74,7 @@ public class GameManager : MonoBehaviour
     public void StartGame()        => SetState(GameState.Playing);
     public void TriggerGameOver()  => SetState(GameState.GameOver);
     public void BackToOpening()    => SetState(GameState.Opening);
+    public void TriggerGameClear() => SetState(GameState.GameClear);
 
     // ---- State Machine ----
     void SetState(GameState newState)
@@ -84,20 +86,32 @@ public class GameManager : MonoBehaviour
         {
             case GameState.Opening:
                 if (openingCanvas) openingCanvas.SetActive(true);
-                if (gameOverCtrl)  gameOverCtrl.HideGameOverRig();
+                if (gameClearRig) gameClearRig.SetActive(false);
+                if (gameOverCtrl) gameOverCtrl.HideGameOverRig();
                 break;
 
             case GameState.Playing:
                 if (openingCanvas) openingCanvas.SetActive(false);
+                if (gameClearRig) gameClearRig.SetActive(false);
                 if (gameOverCtrl)  gameOverCtrl.HideGameOverRig();
                 break;
 
             case GameState.GameOver:
                 if (openingCanvas) openingCanvas.SetActive(false);
-                
+                if (gameClearRig) gameClearRig.SetActive(false);
+
                 // GameOver 상태 진입 시 컨트롤러 작동
                 if (gameOverCtrl)  gameOverCtrl.TriggerGameOver();
                 break;
+
+            case GameState.GameClear:
+                if (openingCanvas) openingCanvas.SetActive(false);
+                if (gameOverCtrl) gameOverCtrl.HideGameOverRig();
+
+                if (gameClearRig) gameClearRig.SetActive(true);
+                break;
+
+
         }
     }
 }
