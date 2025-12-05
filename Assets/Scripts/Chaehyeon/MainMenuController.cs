@@ -77,6 +77,21 @@ public class MainMenuController : MonoBehaviour
         //    skipAction.action.performed += OnSkipPerformed;
         //    skipAction.action.Enable();
         //}
+        Help = Instantiate(panelTutorial);
+        Help.SetActive(false);
+        Help.transform.position += panelPosition;
+
+        // Debug.Log("MainMenuController Awake");
+
+        if (gamePrefab != null)
+            gamePrefab.SetActive(false);
+
+        //if (panelAbout != null)
+        //    panelAbout.SetActive(false);
+        openingCanvas.SetActive(false);
+
+        ShowMainMenuAndPlayBgm();
+
     }
 
     private void OnDisable()
