@@ -1,7 +1,9 @@
 using System.Collections.Generic;
-
+using Unity.VisualScripting;
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.XR.Interaction.Toolkit;
+
 // using UnityEngine.XR.Interaction.Toolkit.Inputs.Readers;
 
 [RequireComponent(typeof(Animator))]
@@ -15,6 +17,7 @@ public class HandAnimator : MonoBehaviour
     [SerializeField] private InputActionReference controllerActionTrigger;
     [SerializeField] private InputActionReference controllerActionPrimary;
 
+    [SerializeField] private XRBaseController originalController;
     #region Method 2 Parameters
 
     ///// <summary>
@@ -72,6 +75,8 @@ public class HandAnimator : MonoBehaviour
     private void Start()
     {
         this.handAnimator = GetComponent<Animator>();
+        originalController = transform.parent.GetComponent<XRBaseController>();
+        originalController.hideControllerModel = true;
     }
 
     #region Method 1
