@@ -882,6 +882,10 @@ PrefabInstance:
       value: 
       objectReference: {fileID: 1615774877}
     - target: {fileID: 8911159963713284639, guid: 0dadb0c3430e24599a35baaf93c7500b, type: 3}
+      propertyPath: zombieSpawnChance
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 8911159963713284639, guid: 0dadb0c3430e24599a35baaf93c7500b, type: 3}
       propertyPath: zombieTargetPoint
       value: 
       objectReference: {fileID: 1615774877}
