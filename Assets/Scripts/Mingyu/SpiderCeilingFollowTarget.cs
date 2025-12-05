@@ -112,15 +112,38 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
 
     void OnAlertFlag(bool v)
     {
-        if (isReturningHome) return;
-        if (lockToTarget) return; // 이미 타겟 고정 중이면 무시
+        // 이미 타겟 강제 고정(Lock) 상태면 간섭하지 않음
+        if (lockToTarget) return;
 
+        // 신호(v)가 true(소리/이동 감지)라면?
+        if (v)
+        {
+            // 만약 집으로 가던 중이었다면? -> 복귀 취소!
+            if (isReturningHome)
+            {
+                Debug.Log("🕷️ [Spider] 복귀 중 인기척 감지! 다시 추격 모드 전환");
+                isReturningHome = false; 
+            }
+            
+            // 진정 타이머 초기화 (다시 0초부터 카운트)
+            noFlagTimer = 0f;
+        }
+
+        // 알람 상태 갱신
         isAlerted = v;
-        if (v) noFlagTimer = 0f;
     }
 
     void Start()
     {
+        if (roofMesh == null)
+    {
+        GameObject foundRoof = GameObject.Find("Bedroom_roof"); 
+        if (foundRoof != null)
+        {
+            roofMesh = foundRoof.GetComponent<MeshRenderer>();
+        }
+    }
+
         if (webLine != null)
         {
             webLine.positionCount = 0;
@@ -271,6 +294,13 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
     // 배회 로직
     void CeilingIdleWander()
     {
+
+        if (roofMesh == null) 
+    { 
+        Debug.LogWarning("거미: Roof Mesh가 없습니다! 배회 중지."); // 로그 확인
+        MaintainCeilingAttachment(); 
+        return; 
+    }
         if (roofMesh == null) { MaintainCeilingAttachment(); return; }
         roofBounds = roofMesh.bounds;
         wanderTimer -= Time.deltaTime;
