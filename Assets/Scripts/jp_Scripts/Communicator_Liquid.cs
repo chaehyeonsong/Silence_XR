@@ -164,7 +164,7 @@ public class Communicator_Liquid : MonoBehaviour
         
         gameController.target_color = target;
 
-        Vector3 goal_offset = new Vector3(0f, 0.5f, 0f);
+        Vector3 goal_offset = new Vector3(0f, 0.2f, 0.2f);
         GameObject color_sign = Instantiate(sign_prefab, transform);
         color_sign.transform.position += goal_offset;
         color_sign.GetComponent<Renderer>().material.color = target;
