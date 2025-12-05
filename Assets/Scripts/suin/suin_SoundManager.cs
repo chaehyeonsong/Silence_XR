@@ -229,6 +229,18 @@ public class suin_SoundManager : MonoBehaviour
             0.1f,
             3f
         );
+        
+        // 💡 "random-notify" 전용 랜덤 pitch / volume
+        if (key == "random-notify")
+        {
+            // volume: 0.6 ~ 1.0 배 사이 랜덤 (너무 작지 않게)
+            v = Mathf.Clamp01(v * Random.Range(1.0f, 2.0f));
+
+            // pitch: 0.8 ~ 1.2 사이 랜덤
+            p = Random.Range(0.8f, 1.2f);
+            
+        }
+
 
         float dur = Mathf.Max(0.01f, clip.length / Mathf.Abs(p));
 
