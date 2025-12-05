@@ -45,20 +45,39 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   clips:
-  - key: FlaskMove
-    clip: {fileID: 8300000, guid: c445b14164750fb46a4249ea9af2e034, type: 3}
-  - key: FlaskGrab
-    clip: {fileID: 8300000, guid: e9d5a3fb76a70c643b2351fbf76c3533, type: 3}
-  - key: moving-cloth (1)
-    clip: {fileID: 8300000, guid: 2f1fffeb47da9894295ba4ef7a7641f5, type: 3}
-  - key: moving-cloth (2)
-    clip: {fileID: 8300000, guid: 520821e5db10c864ca9ac03d78dd010c, type: 3}
-  - key: moving-cloth (3)
-    clip: {fileID: 8300000, guid: 8e7b14916db6c82478668926ade11fce, type: 3}
-  - key: moving-cloth (4)
-    clip: {fileID: 8300000, guid: 9ef280777323a5740b5aa116c147abaa, type: 3}
-  - key: moving-cloth (5)
-    clip: {fileID: 8300000, guid: 645b70059880e4846b6f8f180b7e4146, type: 3}
+  - key: flask-grab
+    clips:
+    - {fileID: 8300000, guid: e9d5a3fb76a70c643b2351fbf76c3533, type: 3}
+  - key: moving-cloth
+    clips:
+    - {fileID: 8300000, guid: 2f1fffeb47da9894295ba4ef7a7641f5, type: 3}
+    - {fileID: 8300000, guid: 520821e5db10c864ca9ac03d78dd010c, type: 3}
+    - {fileID: 8300000, guid: 8e7b14916db6c82478668926ade11fce, type: 3}
+    - {fileID: 8300000, guid: 9ef280777323a5740b5aa116c147abaa, type: 3}
+    - {fileID: 8300000, guid: 645b70059880e4846b6f8f180b7e4146, type: 3}
+  - key: flask-pour
+    clips:
+    - {fileID: 8300000, guid: 1e18006ccb5bbc346935b80d9bf4fde6, type: 3}
+  - key: flask-impact
+    clips:
+    - {fileID: 8300000, guid: c445b14164750fb46a4249ea9af2e034, type: 3}
+  - key: flask-move
+    clips:
+    - {fileID: 8300000, guid: 7da6df80bc49e7547a57796d7ca24d41, type: 3}
+    - {fileID: 8300000, guid: 035b3536eb8582b48a3f385baa5e2763, type: 3}
+    - {fileID: 8300000, guid: a044d9033f4ab6e4bb86640bd2c0cde3, type: 3}
+    - {fileID: 8300000, guid: 89ff126879e999640a65d54d299a604f, type: 3}
+    - {fileID: 8300000, guid: a690465b3706f554d8960e45c52c8951, type: 3}
+    - {fileID: 8300000, guid: a71910e2935d54148b9c4ac8c50c90d6, type: 3}
+    - {fileID: 8300000, guid: 77806976fba808c4b8d1a0c8ddd822bb, type: 3}
+    - {fileID: 8300000, guid: 59eaf242f08740a47bc9413740f3e5fb, type: 3}
+    - {fileID: 8300000, guid: 35d51f6211b59b54a8d105fa52298763, type: 3}
+    - {fileID: 8300000, guid: 5c77c684f229e334e8a300beba24c018, type: 3}
+    - {fileID: 8300000, guid: 4ca164ff7feaf2247bbef0b471f25615, type: 3}
+    - {fileID: 8300000, guid: 027975f0a7260f7408030c1797dacdbf, type: 3}
+    - {fileID: 8300000, guid: c7440b3b1a28d9349914a58e4b82586b, type: 3}
+    - {fileID: 8300000, guid: d6c3bae7ff28dba45b888878eeaf2338, type: 3}
+    - {fileID: 8300000, guid: 20d64a62136d109409f9c7960f385987, type: 3}
   outputMixerGroup: {fileID: 0}
   poolSize: 8
   defaultCooldown: 0.1
