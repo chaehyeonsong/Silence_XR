@@ -1,7 +1,8 @@
 using System.Collections.Generic;
-
 using UnityEngine;
 using UnityEngine.InputSystem;
+using UnityEngine.XR.Interaction.Toolkit;
+
 // using UnityEngine.XR.Interaction.Toolkit.Inputs.Readers;
 
 [RequireComponent(typeof(Animator))]
@@ -14,7 +15,6 @@ public class HandAnimator : MonoBehaviour
 
     [SerializeField] private InputActionReference controllerActionTrigger;
     [SerializeField] private InputActionReference controllerActionPrimary;
-
     #region Method 2 Parameters
 
     ///// <summary>
@@ -26,7 +26,7 @@ public class HandAnimator : MonoBehaviour
     //[SerializeField] private XRInputValueReader<float> m_GripInput = new XRInputValueReader<float>("Grip");
 
     #endregion Method 2 Parameters
-
+    
     private Animator handAnimator = null;
 
     /// <summary>
