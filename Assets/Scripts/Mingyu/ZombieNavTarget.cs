@@ -134,35 +134,41 @@ public class ZombieNavTarget : MonoBehaviour
     {
         if (agent == null) return;
 
-        // 1. 죽는 플래그 (Lock Mode)
+        // ▼▼▼ [수정 1] 타겟과의 거리를 미리 계산 (타겟이 있을 때만) ▼▼▼
+        float dist = 0f;
+        if (targetPoint != null)
+        {
+            dist = Vector3.Distance(transform.position, targetPoint.position);
+        }
+
+        // ▼▼▼ [수정 2] 게임오버 체크 로직을 '공통'으로 빼냄 ▼▼▼
+        // 조건: 타겟이 있고 + (죽음 플래그 OR 경계 상태) + 거리가 가까움 + 아직 게임오버 안 됨
+        if (targetPoint != null && (lockToTarget || isAlerted))
+        {
+            if (dist <= killTriggerDistance && !hasTriggeredGameOver)
+            {
+                hasTriggeredGameOver = true;
+                Debug.Log($"🧟 [Zombie] 잡았다! (상태: Lock={lockToTarget}, Alert={isAlerted}) 거리: {dist:F2}");
+
+                if (suin_FlagHub.instance != null)
+                {
+                    suin_FlagHub.instance.TriggerPlayerKillFlag();
+                }
+            }
+        }
+        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
+
+        // 1. 죽는 플래그 (Lock Mode) - 이동 로직
         if (lockToTarget)
         {
             isReturningHome = false;
             isAlerted = true;
             noFlagTimer = 0f;
-
             agent.speed = initialSpeed * chaseSpeedMultiplier;
 
             if (targetPoint != null)
             {
-                float dist = Vector3.Distance(transform.position, targetPoint.position);
-
-                // ▼▼▼ 거리 체크 및 게임오버 실행 ▼▼▼
-                if (dist <= killTriggerDistance)
-                {
-                    if (!hasTriggeredGameOver)
-                    {
-                        hasTriggeredGameOver = true;
-                        Debug.Log($"🧟 [Zombie] 잡았다! 거리: {dist:F2} <= {killTriggerDistance} -> 게임오버 요청");
-
-                        if (suin_FlagHub.instance != null)
-                        {
-                            suin_FlagHub.instance.TriggerPlayerKillFlag();
-                        }
-                    }
-                }
-                // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
-
+                // 도착 처리
                 if (dist <= arriveDistance)
                 {
                     if (!agent.isStopped)
@@ -178,16 +184,15 @@ public class ZombieNavTarget : MonoBehaviour
                     agent.SetDestination(targetPoint.position);
                 }
             }
-            return; 
+            return; // Lock 모드면 여기서 끝 (아래 로직 무시)
         }
         else
         {
             agent.speed = initialSpeed;
         }
 
-        // 2. Calm Check
+        // 2. Calm Check (평화 복귀 체크)
         noFlagTimer += Time.deltaTime;
-
         if (!isReturningHome && noFlagTimer >= calmTimeout && spawnPoint != null)
         {
             isReturningHome = true;
@@ -195,7 +200,7 @@ public class ZombieNavTarget : MonoBehaviour
             agent.ResetPath();
         }
 
-        // 3. Return Home
+        // 3. Return Home (집으로 복귀)
         if (isReturningHome)
         {
             if (spawnPoint == null)
@@ -203,7 +208,6 @@ public class ZombieNavTarget : MonoBehaviour
                 Destroy(gameObject);
                 return;
             }
-
             agent.isStopped = false;
             agent.stoppingDistance = 0f;
             agent.SetDestination(spawnPoint.position);
@@ -215,7 +219,7 @@ public class ZombieNavTarget : MonoBehaviour
             return;
         }
 
-        // 4. Alert Chase
+        // 4. Alert Chase (일반 추적)
         if (isAlerted && targetPoint != null)
         {
             agent.isStopped = false;
@@ -224,7 +228,7 @@ public class ZombieNavTarget : MonoBehaviour
             return;
         }
 
-        // 5. Idle Wander
+        // 5. Idle Wander (배회)
         if (useRandomWander)
         {
             IdleWander();
