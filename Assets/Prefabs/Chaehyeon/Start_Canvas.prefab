@@ -1258,7 +1258,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!224 &6125386127887335729
 RectTransform:
   m_ObjectHideFlags: 0
@@ -1379,15 +1379,20 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c54932014fde4484e8d5e2a8be20ec6f, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  panelAbout: {fileID: 6125386128440946148}
+  panelTutorial: {fileID: 0}
+  panelPosition: {x: 0, y: 0, z: 0}
+  ToggledByHelp: []
+  panelHelp: {fileID: 0}
   mainMenuRoot: {fileID: 6125386127887335742}
   aboutTitle: {fileID: 6125386126904197536}
   aboutBody: {fileID: 6125386127856356050}
+  soundmanager: {fileID: 0}
   bgm: {fileID: 6125386128016134996}
   openingVideo: {fileID: 0}
   openingCanvas: {fileID: 0}
   skipAction: {fileID: 4377291196381786422, guid: c348712bda248c246b8c49b3db54643f, type: 3}
-  gameSceneName: Level_opening2
+  gamePrefab: {fileID: 0}
+  gameController: {fileID: 0}
 --- !u!1 &6125386128004415186
 GameObject:
   m_ObjectHideFlags: 0

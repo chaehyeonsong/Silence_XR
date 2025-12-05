@@ -28,8 +28,8 @@ public class MainMenuController : MonoBehaviour
     [SerializeField] private VideoPlayer openingVideo;  // 오프닝 영상 VideoPlayer
     [SerializeField] private GameObject openingCanvas;  // 오프닝 영상이 올라간 Canvas (검은 배경 + RawImage)
 
-    [Header("Skip Input (XRI)")]
-    [SerializeField] private InputActionReference skipAction;  // XRI Input Actions에서 드래그해서 연결
+    //[Header("Skip Input (XRI)")]
+    //[SerializeField] private InputActionReference skipAction;  // XRI Input Actions에서 드래그해서 연결
 
     // [Header("Scene")]
     // [SerializeField] private string gameSceneName = "Main_Scene"; // 실제 씬 명으로 변경
@@ -66,19 +66,17 @@ public class MainMenuController : MonoBehaviour
 
         ShowMainMenuAndPlayBgm();
 
-
-
     }
 
     private void OnEnable()
     {
         // Debug.Log("MainMenuController OnEnable");
-        if (skipAction != null && skipAction.action != null)
-        {
-            // Debug.Log("Skip butten is clicked");
-            skipAction.action.performed += OnSkipPerformed;
-            skipAction.action.Enable();
-        }
+        //if (skipAction != null && skipAction.action != null)
+        //{
+        //    // Debug.Log("Skip butten is clicked");
+        //    skipAction.action.performed += OnSkipPerformed;
+        //    skipAction.action.Enable();
+        //}
     }
 
     private void OnDisable()
@@ -86,24 +84,28 @@ public class MainMenuController : MonoBehaviour
         // Debug.Log("MainMenuController OnDisable");
     }
 
-    private void OnSkipPerformed(InputAction.CallbackContext ctx)
-    {
-        SkipOpening();
-    }
+    //private void OnSkipPerformed(InputAction.CallbackContext ctx)
+    //{
+    //    SkipOpening();
+    //}
 
     public void SkipOpening()
     {
+        Debug.Log("Called SkipOpening");
         if (openingVideo != null && openingVideo.isPlaying)
         {
             openingVideo.Stop();
+            Debug.Log("stopped video");
             openingVideo.loopPointReached -= OnOpeningFinished;
         }
 
         if (openingCanvas != null)
             openingCanvas.SetActive(false);
+        Debug.Log("closed opening canvas");
 
         // ShowMainMenuAndPlayBgm();
         StartGame();
+        Debug.Log("called StartGame");
     }
 
     private void OnDestroy()
@@ -137,17 +139,18 @@ public class MainMenuController : MonoBehaviour
         }
     }
 
-    private void StartGame(){
-        if (skipAction != null && skipAction.action != null)
-        {
-            Debug.Log("Erase skip command");
-            skipAction.action.performed -= OnSkipPerformed;
-        }
+    private void StartGame()
+    {
+        //if (skipAction != null && skipAction.action != null)
+        //{
+        //    Debug.Log("Erase skip command");
+        //    skipAction.action.performed -= OnSkipPerformed;
+        //}
         mainMenuRoot.SetActive(false);
 
         gamePrefab.SetActive(true);
         gameController.GameSetup();
-        
+   
         Destroy(Help);
     }
 
