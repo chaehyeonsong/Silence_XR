@@ -59,16 +59,22 @@ public class Spawner : MonoBehaviour
     {
         while (true)
         {
-            // 🛑 [GameManager 연동]
-            // 게임 매니저가 있고, 현재 상태가 Playing이 아니라면(Opening 등) 스폰 멈춤
+            // 1차 체크: 루프 시작 시점
             if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameManager.GameState.Playing)
             {
-                yield return new WaitForSeconds(1.0f); // 1초 대기 후 다시 검사
+                yield return new WaitForSeconds(1.0f);
                 continue; 
             }
 
-            // [기본 로직] 시간 대기
+            // [기본 로직] 시간 대기 (예: 10초)
             yield return new WaitForSeconds(spawnInterval);
+
+            // 🛑 [핵심 수정] 대기하는 동안 게임오버가 되었을 수 있으므로 여기서 한 번 더 체크!
+            if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameManager.GameState.Playing)
+            {
+                // 게임 중이 아니면 스폰 로직을 실행하지 않고 위로 돌아감
+                continue; 
+            }
 
             // 몬스터 리스트 정리 (죽은 애들 제거)
             activeMonsters.RemoveAll(m => m == null);
@@ -107,6 +113,9 @@ public class Spawner : MonoBehaviour
 
     void TrySpawnMonsterWithChance()
     {
+        // 🛑 [안전 장치] 혹시 모르니 스폰 직전에도 한 번 더 체크 (선택 사항이지만 안전함)
+        if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameManager.GameState.Playing) return;
+
         float roll = Random.value;
         bool pass = roll <= currentSpawnChance;
 
@@ -142,7 +151,6 @@ public class Spawner : MonoBehaviour
 
     bool SpawnRandomMonster()
     {
-        // 다시 한 번 체크
         activeMonsters.RemoveAll(m => m == null);
         if (activeMonsters.Count >= maxMonsters) return false;
 
@@ -166,7 +174,6 @@ public class Spawner : MonoBehaviour
             mover.spawnPoint = point;
         }
 
-        // 🔊 [오디오 수정됨] 좀비 클립 재생 (기존 코드에선 spider 클립이었음)
         PlayLoudSpawnSound(zombieSpawnClip, point.position, soundVolume);
 
         Debug.Log($"🧟 좀비 스폰됨: {point.name}");
@@ -191,14 +198,12 @@ public class Spawner : MonoBehaviour
             ctrl.spawnPoint = point;
         }
 
-        // 🔊 [오디오] 스파이더 클립 재생
         PlayLoudSpawnSound(spiderSpawnClip, point.position, soundVolume);
 
         Debug.Log($"🕷️ 스파이더 스폰됨: {point.name}");
         return true;
     }
 
-    // 👇 [최종 오디오 함수] 이것만 남겼습니다 (Custom3DSound 삭제)
     void PlayLoudSpawnSound(AudioClip clip, Vector3 position, float volume)
     {
         if (clip == null) return;
@@ -210,7 +215,6 @@ public class Spawner : MonoBehaviour
         source.clip = clip;
         source.volume = volume;
 
-        // 세팅: 20m까지 최대 볼륨, 150m까지 들림, 2D 느낌 20% 섞음
         source.spatialBlend = 0.8f;      
         source.minDistance = 20.0f;      
         source.maxDistance = 150.0f;     
@@ -218,5 +222,19 @@ public class Spawner : MonoBehaviour
 
         source.Play();
         Destroy(audioObj, clip.length);
+    }
+
+    // GameManager에서 호출하는 함수
+    public void ClearAllMonsters()
+    {
+        foreach (GameObject monster in activeMonsters)
+        {
+            if (monster != null)
+            {
+                Destroy(monster);
+            }
+        }
+        activeMonsters.Clear();
+        Debug.Log("🧹 [Spawner] 모든 몬스터 제거 완료 (Game Over/Clear)");
     }
 }
