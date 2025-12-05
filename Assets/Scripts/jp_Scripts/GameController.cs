@@ -364,6 +364,7 @@ public class GameController : MonoBehaviour
             {
                 if (com_check.result == true) // when color is good
                 {
+                    DestroyAllRemnants();
                     gameManager.TriggerGameClear();
                     Destroy(liquid_checker);
                 }

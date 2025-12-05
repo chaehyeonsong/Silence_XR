@@ -36,7 +36,6 @@ public class GameManager : MonoBehaviour
     {
         SetState(GameState.Opening);
 
-        // [LINK] 1. FlagHub의 PlayerKill 이벤트 구독 (연결)
         if (suin_FlagHub.instance != null)
         {
             suin_FlagHub.instance.OnPlayerKillFlag += OnPlayerKillFlagReceived;
@@ -50,27 +49,21 @@ public class GameManager : MonoBehaviour
 
     void OnDestroy()
     {
-        // [LINK] 2. 오브젝트가 파괴될 때 구독 해제 (중요: 메모리 누수 방지)
         if (suin_FlagHub.instance != null)
         {
             suin_FlagHub.instance.OnPlayerKillFlag -= OnPlayerKillFlagReceived;
         }
     }
 
-    // [LINK] 3. 킬 플래그가 들어왔을 때 실행되는 함수
     private void OnPlayerKillFlagReceived()
     {
-        // 게임 플레이 중에만 죽음 처리
         if (CurrentState == GameState.Playing)
         {
             Debug.Log("💀 [GameManager] Kill Flag 수신 → SetState(GameOver) 호출");
-            
-            // 직접 컨트롤러를 부르지 않고 State Machine을 통해 전환
             SetState(GameState.GameOver);
         }
     }
 
-    // ---- Public Actions ----
     public void StartGame()        => SetState(GameState.Playing);
     public void TriggerGameOver()  => SetState(GameState.GameOver);
     public void BackToOpening()    => SetState(GameState.Opening);
@@ -81,6 +74,17 @@ public class GameManager : MonoBehaviour
     {
         CurrentState = newState;
         Debug.Log("Game State → " + newState);
+
+        // ✅ [추가] 게임 오버 혹은 게임 클리어 시 몬스터 싹 지우기 로직
+        if (newState == GameState.GameOver || newState == GameState.GameClear)
+        {
+            // 씬에 있는 Spawner를 찾아서 청소 명령 내림
+            Spawner spawner = FindObjectOfType<Spawner>();
+            if (spawner != null)
+            {
+                spawner.ClearAllMonsters();
+            }
+        }
 
         switch (newState)
         {
@@ -101,7 +105,7 @@ public class GameManager : MonoBehaviour
                 if (gameClearRig) gameClearRig.SetActive(false);
 
                 // GameOver 상태 진입 시 컨트롤러 작동
-                if (gameOverCtrl)  gameOverCtrl.TriggerGameOver();
+                //if (gameOverCtrl)  gameOverCtrl.TriggerGameOver();
                 break;
 
             case GameState.GameClear:
