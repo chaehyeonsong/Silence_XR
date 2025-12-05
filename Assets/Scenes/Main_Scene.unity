@@ -1184,6 +1184,26 @@ PrefabInstance:
   m_Modification:
     m_TransformParent: {fileID: 1903761795}
     m_Modifications:
+    - target: {fileID: 7639800324411620136, guid: e9f006fd2d1784b71a3d5d1fdacfff90, type: 3}
+      propertyPath: m_LocalPosition.x
+      value: 0.032
+      objectReference: {fileID: 0}
+    - target: {fileID: 7639800324411620136, guid: e9f006fd2d1784b71a3d5d1fdacfff90, type: 3}
+      propertyPath: m_LocalPosition.y
+      value: -0.037
+      objectReference: {fileID: 0}
+    - target: {fileID: 7893891605924361491, guid: e9f006fd2d1784b71a3d5d1fdacfff90, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: ef19f2f4cdd2cc5478f1c77bfcd77fec, type: 2}
+    - target: {fileID: 7893891605924361491, guid: e9f006fd2d1784b71a3d5d1fdacfff90, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: 4557130490119952708, guid: ef19f2f4cdd2cc5478f1c77bfcd77fec, type: 2}
+    - target: {fileID: 7893891605924361491, guid: e9f006fd2d1784b71a3d5d1fdacfff90, type: 3}
+      propertyPath: m_hasFontAssetChanged
+      value: 0
+      objectReference: {fileID: 0}
     - target: {fileID: 7893891606898217796, guid: e9f006fd2d1784b71a3d5d1fdacfff90, type: 3}
       propertyPath: m_RootOrder
       value: 1
@@ -1235,6 +1255,62 @@ PrefabInstance:
     - target: {fileID: 7893891606898217797, guid: e9f006fd2d1784b71a3d5d1fdacfff90, type: 3}
       propertyPath: m_IsActive
       value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7893891607038197600, guid: e9f006fd2d1784b71a3d5d1fdacfff90, type: 3}
+      propertyPath: m_IsActive
+      value: 1
+      objectReference: {fileID: 0}
+    - target: {fileID: 7893891607038197602, guid: e9f006fd2d1784b71a3d5d1fdacfff90, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_Target
+      value: 
+      objectReference: {fileID: 1783489696}
+    - target: {fileID: 7893891607038197602, guid: e9f006fd2d1784b71a3d5d1fdacfff90, type: 3}
+      propertyPath: m_OnClick.m_PersistentCalls.m_Calls.Array.data[0].m_MethodName
+      value: OnPlayAgain
+      objectReference: {fileID: 0}
+    - target: {fileID: 7893891607038197603, guid: e9f006fd2d1784b71a3d5d1fdacfff90, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7893891607038197603, guid: e9f006fd2d1784b71a3d5d1fdacfff90, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: -95
+      objectReference: {fileID: 0}
+    - target: {fileID: 7893891607457731112, guid: e9f006fd2d1784b71a3d5d1fdacfff90, type: 3}
+      propertyPath: m_fontSize
+      value: 70
+      objectReference: {fileID: 0}
+    - target: {fileID: 7893891607457731112, guid: e9f006fd2d1784b71a3d5d1fdacfff90, type: 3}
+      propertyPath: m_margin.x
+      value: -79.8457
+      objectReference: {fileID: 0}
+    - target: {fileID: 7893891607457731112, guid: e9f006fd2d1784b71a3d5d1fdacfff90, type: 3}
+      propertyPath: m_margin.z
+      value: -202.7002
+      objectReference: {fileID: 0}
+    - target: {fileID: 7893891607457731112, guid: e9f006fd2d1784b71a3d5d1fdacfff90, type: 3}
+      propertyPath: m_fontAsset
+      value: 
+      objectReference: {fileID: 11400000, guid: ca90dd722dbd810469008b1eca18b8d5, type: 2}
+    - target: {fileID: 7893891607457731112, guid: e9f006fd2d1784b71a3d5d1fdacfff90, type: 3}
+      propertyPath: m_fontSizeBase
+      value: 70
+      objectReference: {fileID: 0}
+    - target: {fileID: 7893891607457731112, guid: e9f006fd2d1784b71a3d5d1fdacfff90, type: 3}
+      propertyPath: m_sharedMaterial
+      value: 
+      objectReference: {fileID: 8023493447965402848, guid: ca90dd722dbd810469008b1eca18b8d5, type: 2}
+    - target: {fileID: 7893891607457731112, guid: e9f006fd2d1784b71a3d5d1fdacfff90, type: 3}
+      propertyPath: m_hasFontAssetChanged
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7893891607457731113, guid: e9f006fd2d1784b71a3d5d1fdacfff90, type: 3}
+      propertyPath: m_LocalPosition.z
+      value: -80
+      objectReference: {fileID: 0}
+    - target: {fileID: 7893891607457731113, guid: e9f006fd2d1784b71a3d5d1fdacfff90, type: 3}
+      propertyPath: m_AnchoredPosition.y
+      value: 29
       objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: e9f006fd2d1784b71a3d5d1fdacfff90, type: 3}
@@ -2222,7 +2298,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: e480983d632a546ec852546cafa56375, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  openingCanvas: {fileID: 0}
+  openingCanvas: {fileID: 6125386128219076305}
   gameOverCtrl: {fileID: 1783489696}
 --- !u!4 &634961147
 Transform:
@@ -2349,16 +2425,6 @@ Transform:
   m_CorrespondingSourceObject: {fileID: 4977818461421110, guid: 796f3aaf30897034195e4f951183b248, type: 3}
   m_PrefabInstance: {fileID: 9072272540217779698}
   m_PrefabAsset: {fileID: 0}
---- !u!4 &721307671 stripped
-Transform:
-  m_CorrespondingSourceObject: {fileID: 4005733655707148, guid: 68a49296450cc5745a78c3895333111e, type: 3}
-  m_PrefabInstance: {fileID: 4524074899916626799}
-  m_PrefabAsset: {fileID: 0}
---- !u!23 &721307673 stripped
-MeshRenderer:
-  m_CorrespondingSourceObject: {fileID: 23648119653173422, guid: 68a49296450cc5745a78c3895333111e, type: 3}
-  m_PrefabInstance: {fileID: 4524074899916626799}
-  m_PrefabAsset: {fileID: 0}
 --- !u!1 &711414208
 GameObject:
   m_ObjectHideFlags: 0
@@ -2421,6 +2487,16 @@ Transform:
   m_Father: {fileID: 1483316182}
   m_RootOrder: 3
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!4 &721307671 stripped
+Transform:
+  m_CorrespondingSourceObject: {fileID: 4005733655707148, guid: 68a49296450cc5745a78c3895333111e, type: 3}
+  m_PrefabInstance: {fileID: 4524074899916626799}
+  m_PrefabAsset: {fileID: 0}
+--- !u!23 &721307673 stripped
+MeshRenderer:
+  m_CorrespondingSourceObject: {fileID: 23648119653173422, guid: 68a49296450cc5745a78c3895333111e, type: 3}
+  m_PrefabInstance: {fileID: 4524074899916626799}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &735543155
 GameObject:
   m_ObjectHideFlags: 0
@@ -6741,6 +6817,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 559a1a4bc93a64575bea257ceecebd89, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  gameManager: {fileID: 634961146}
   gameOverRig: {fileID: 232451578}
   leftArm: {fileID: 1269115349}
   rightArm: {fileID: 193190966}
