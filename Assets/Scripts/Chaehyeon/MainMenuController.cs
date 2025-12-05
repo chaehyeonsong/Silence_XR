@@ -146,10 +146,21 @@ public class MainMenuController : MonoBehaviour
         //    Debug.Log("Erase skip command");
         //    skipAction.action.performed -= OnSkipPerformed;
         //}
+        
         mainMenuRoot.SetActive(false);
 
         gamePrefab.SetActive(true);
         gameController.GameSetup();
+
+        // ✅ [추가됨] GameManager에게 게임이 시작되었음을 알림 (State를 Playing으로 변경)
+        if (GameManager.Instance != null)
+        {
+            GameManager.Instance.StartGame(); 
+        }
+        else
+        {
+            Debug.LogWarning("GameManager Instance를 찾을 수 없습니다.");
+        }
    
         Destroy(Help);
     }
