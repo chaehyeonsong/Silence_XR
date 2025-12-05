@@ -91,6 +91,9 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
             hub.OnMoveSlightFlag += OnAlertFlag;
             hub.OnPlayerSoundFlag += OnAlertFlag;
             hub.OnWaterSoundFlag += OnAlertFlag;
+            
+            // ▼▼▼ [추가] 4번 트리거(불 켜짐/상태변경)에도 반응하도록 추가 ▼▼▼
+            hub.OnLightStateChanged += OnAlertFlag; 
         }
     }
 
@@ -101,6 +104,9 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
             hub.OnMoveSlightFlag -= OnAlertFlag;
             hub.OnPlayerSoundFlag -= OnAlertFlag;
             hub.OnWaterSoundFlag -= OnAlertFlag;
+
+            // ▼▼▼ [추가] 해제도 잊지 말고 추가 ▼▼▼
+            hub.OnLightStateChanged -= OnAlertFlag; 
         }
     }
 
