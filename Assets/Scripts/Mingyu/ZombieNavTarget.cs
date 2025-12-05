@@ -86,6 +86,7 @@ public class ZombieNavTarget : MonoBehaviour
             hub.OnMoveSlightFlag += OnAlertFlag;
             hub.OnPlayerSoundFlag += OnAlertFlag;
             hub.OnWaterSoundFlag += OnAlertFlag;
+            hub.OnLightStateChanged += OnAlertFlag;
         }
     }
 
@@ -97,6 +98,7 @@ public class ZombieNavTarget : MonoBehaviour
             hub.OnMoveSlightFlag -= OnAlertFlag;
             hub.OnPlayerSoundFlag -= OnAlertFlag;
             hub.OnWaterSoundFlag -= OnAlertFlag;
+            hub.OnLightStateChanged -= OnAlertFlag;
         }
     }
 
