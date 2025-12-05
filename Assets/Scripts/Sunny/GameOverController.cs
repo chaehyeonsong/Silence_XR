@@ -5,6 +5,10 @@ using UnityEngine.UI;
 
 public class GameOverController : MonoBehaviour
 {
+
+    [Header("Game Flow")]
+    [SerializeField] private GameManager gameManager; 
+
     public GameObject gameOverRig;          // parent under camera
     public Transform leftArm, rightArm;
     public Vector3 leftStartLocalPos, leftEndLocalPos;
@@ -75,7 +79,16 @@ public class GameOverController : MonoBehaviour
     // Called by Play Again button
     public void OnPlayAgain()
     {
-        GameManager.Instance.BackToOpening();
+        Debug.Log("GameOverController: OnPlayAgain called");
+        if (gameManager != null)
+        {
+            Debug.Log("GameOverController: Calling BackToOpening on GameManager");
+            gameManager.BackToOpening();
+        }
+        else
+        {
+            Debug.LogWarning("GameOverController: GameManager reference not set in Inspector");
+        }
          // stop sounds
         var audio = FindObjectOfType<GameOverAudio>();
         if (audio != null)
