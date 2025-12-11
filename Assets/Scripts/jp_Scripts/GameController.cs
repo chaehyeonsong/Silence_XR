@@ -50,6 +50,8 @@ public class GameController : MonoBehaviour
     public GameObject XR_main_camera;
     public GameManager gameManager;
     [HideInInspector]
+    public UniversalBreakable universalBreakable;
+    [HideInInspector]
     public AudioSource audioSource;
     public InputActionReference rightPrimary;
     public InputActionReference rightSecondary;
@@ -57,11 +59,17 @@ public class GameController : MonoBehaviour
     public InputActionReference leftSecondary;
     [HideInInspector]
     public LiquidControl MixingFlask;
+    [HideInInspector]
+    public float flaskBreakDelay = 0f;
+
+    private bool isGameRestarting = false;
 
 
     //VR codes, which I HATE, shithead
     private void OnEnable()
     {
+        DestroyAllRemnants();
+
         if (rightPrimary != null && rightPrimary.action != null)
         {
             rightPrimary.action.Enable();
@@ -93,6 +101,8 @@ public class GameController : MonoBehaviour
 
     private void Awake()
     {
+        DestroyAllRemnants();
+
         if (rightPrimary != null && rightPrimary.action != null)
         {
             rightPrimary.action.Enable();
@@ -236,47 +246,65 @@ public class GameController : MonoBehaviour
 
     public void Reset_game() //activated by left controller primary button (A)
     {
-        is_game_running = false;
-        if (communicator != null)
+        if (!isGameRestarting)
         {
-            communicator.is_game_running = is_game_running;
+            is_game_running = false;
+            if (communicator != null)
+            {
+                communicator.is_game_running = is_game_running;
+            }
+            game_win = false;
+            fail = true;
+            Restarter();
         }
-        game_win = false;
-        fail = true;
-        Restarter();
     }
 
     public void Restarter()
     {
-        audioSource.Play(); //play shatter sound, unaffected by flask positions
-        Destroy(Linetracer);
-        Destroy(liquid_puzzle);
-        DestroyAllRemnants();
-        Destroy(liquid_checker);
-        GameSetup();
-        fail = false;
-        speedticket = false;
+        isGameRestarting = true;
+        StartCoroutine(RestarterSequence());
     }
 
-    public void GameEndRestarter()
+    IEnumerator RestarterSequence()
     {
-        //Destroy GameEnding
+        audioSource.Play(); // play shatter sound
         Destroy(Linetracer);
+        Destroy(liquid_checker);
+        BreakAllFlasks();
+        Debug.Log("BreakAllFlasks Called");
+
+        yield return new WaitForSeconds(flaskBreakDelay + 0.2f);
+
         Destroy(liquid_puzzle);
         DestroyAllRemnants();
-        Destroy(liquid_checker);
         GameSetup();
+
         fail = false;
         speedticket = false;
+        isGameRestarting = false;
     }
 
-    void DestroyAllRemnants()
+    void DestroyAllRemnants() // Any remaining flask or spray get destroyed
     {
         foreach (var flask in FindObjectsOfType<LiquidControl>())
         {
             Destroy(flask.gameObject);
         }
         
+        foreach (var spray in FindObjectsOfType<ParticleSystem>())
+        {
+            Destroy(spray.gameObject);
+        }
+    }
+
+    void BreakAllFlasks() // Break flasks, not destroy
+    {
+        foreach (var flask in FindObjectsOfType<LiquidControl>())
+        {
+            universalBreakable = flask.GetComponent<UniversalBreakable>();
+            universalBreakable.Break();
+        }
+
         foreach (var spray in FindObjectsOfType<ParticleSystem>())
         {
             Destroy(spray.gameObject);
@@ -302,10 +330,9 @@ public class GameController : MonoBehaviour
 
     void Update()
     {
-        if (speedticket) //when any flask collided too quickly
+        if (speedticket && !isGameRestarting) // when any flask collided too quickly
         {
-            fail = true;
-            Restarter();
+            Reset_game();
         }
 
         if (communicator != null) //when linetracer game is playing
@@ -339,7 +366,7 @@ public class GameController : MonoBehaviour
             }
             else if (fail == true) //when you fail game, restart the game
             {
-                Restarter();
+                Reset_game();
             }
             else //when linetracer isn't running for whatever reason, destroy game instance
             {
@@ -370,8 +397,7 @@ public class GameController : MonoBehaviour
                 }
                 else //when color is bad
                 {
-                    fail = true;
-                    Restarter();
+                    Reset_game();
                 }
             }
         }

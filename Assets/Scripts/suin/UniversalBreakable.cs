@@ -37,6 +37,7 @@ public class UniversalBreakable : MonoBehaviour
     public float impactSoundVelocityThreshold = 1.0f;
 
     public AudioClip impactClip;
+    [Tooltip("Base volume for impact sound, multiplied by collision speed")]
     [Range(0f, 1f)] public float impactVolume = 1.0f;
 
     [Tooltip("연속 충돌 시 소리가 너무 자주 나지 않도록 막는 쿨다운 (초)")]
@@ -52,7 +53,11 @@ public class UniversalBreakable : MonoBehaviour
     [Header("Auto Cleanup")]
     [Tooltip("파편들을 일정 시간 후 삭제할지 여부 (선택)")]
     public bool autoDestroyShards = false;
-    public float shardLifetime = 10f;
+    public float shardLifetime = 0f;
+
+    [Header("GameController")]
+    [Tooltip("Add GameController here")]
+    public GameController gameController;
 
     // 내부 상태
     [SerializeField] private bool hasBroken = false;
@@ -75,6 +80,8 @@ public class UniversalBreakable : MonoBehaviour
     private void Awake()
     {
         rb = GetComponent<Rigidbody>();
+
+        gameController.flaskBreakDelay = shardLifetime;
 
         // XRGrab 자동 감지
         grabInteractable = GetComponent<XRGrabInteractable>();
@@ -181,7 +188,7 @@ public class UniversalBreakable : MonoBehaviour
         isHeld = false;
     }
 
-    private void OnCollisionEnter(Collision collision)
+    private void OnCollisionEnter(Collision collision) // This only plays bump sound 
     {
         if (hasBroken) return;
 
@@ -200,20 +207,22 @@ public class UniversalBreakable : MonoBehaviour
             {
                 if (Time.time - _lastImpactSoundTime >= impactSoundCooldown)
                 {
-                    PlayImpactSound(collision);
+                    PlayImpactSound(collision, impactSpeed);
                     _lastImpactSoundTime = Time.time;
                 }
             }
         }
 
         // 그 다음 깨짐 판정
-        if (willBreak)
-        {
-            Break(collision);
-        }
+        //if (willBreak)
+        //{
+        //   Break(collision);
+        //}
+
+        // GameController will decide when flasks break
     }
     
-    private void PlayImpactSound(Collision collision)
+    private void PlayImpactSound(Collision collision, float speed)
     {
         if (impactClip == null || impactVolume <= 0f)
             return;
@@ -222,24 +231,24 @@ public class UniversalBreakable : MonoBehaviour
         if (collision != null && collision.contactCount > 0)
             pos = collision.GetContact(0).point;
 
-        AudioSource.PlayClipAtPoint(impactClip, pos, impactVolume);
+        AudioSource.PlayClipAtPoint(impactClip, pos, impactVolume * speed);
     }
 
 
 
-    public void ForceBreak()
-    {
-        if (hasBroken) return;
-        Break(null);
-    }
+    //public void ForceBreak()
+    //{
+    //    if (hasBroken) return;
+    //    Break(null);
+    //}
 
-    private void Break(Collision collision)
+    public void Break() //GameController calls this function
     {
         if (hasBroken) return;
         hasBroken = true;
 
         // 1) 소리
-        PlayBreakSound(collision);
+        //PlayBreakSound(collision); // GameController plays break sound regardless of position
 
         // 2) 원본(통짜) 숨기기 (Renderer/Collider만 비활성화)
         HideIntactVisual();

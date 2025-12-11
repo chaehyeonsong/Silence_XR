@@ -49,6 +49,7 @@ MonoBehaviour:
   gameController: {fileID: 0}
   flask_adjustment: 38
   mixing_flask_position: {x: 0, y: 0, z: -0.3}
+  sign_offset: {x: 0, y: 0.2, z: 0.1}
   target: {r: 0, g: 0, b: 0, a: 1}
   target_flask: {fileID: 0}
   source_flask_list: []
