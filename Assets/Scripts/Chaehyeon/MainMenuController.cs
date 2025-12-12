@@ -40,6 +40,9 @@ public class MainMenuController : MonoBehaviour
     [Header("GameController")]
     [SerializeField] private GameController gameController;
 
+    [Header("Monster")]
+    [SerializeField] private GameObject monster;
+
     [Header("TrimController")]
     [SerializeField] private LineColorManager lineColorManager;
     [SerializeField] private LiquidColorManager liquidColorManager;
@@ -60,6 +63,8 @@ public class MainMenuController : MonoBehaviour
         Help.transform.position += panelPosition;
         isLiquidSet = false;
         isLineSet = false;
+
+        monster.SetActive(false);
 
         // Debug.Log("MainMenuController Awake");
 
@@ -90,6 +95,8 @@ public class MainMenuController : MonoBehaviour
         liquidColorManager.Reset();
         isLiquidSet = false;
         isLineSet = false;
+
+        monster.SetActive(false);
 
         // Debug.Log("MainMenuController Awake");
 
@@ -173,6 +180,7 @@ public class MainMenuController : MonoBehaviour
         //}
         
         mainMenuRoot.SetActive(false);
+        monster.SetActive(true);
 
         gamePrefab.SetActive(true);
         gameController.GameSetup();

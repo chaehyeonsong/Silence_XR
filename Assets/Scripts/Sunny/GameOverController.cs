@@ -33,17 +33,19 @@ public class GameOverController : MonoBehaviour
         }
     }
 
-    void DestroyAllRemnants() // Any remaining flask or spray get destroyed, this code was taken
-                              // from GameController
+    void DestroyAllRemnants() // Any remaining flask or spray get destroyed
     {
         foreach (var flask in FindObjectsOfType<LiquidControl>())
         {
             Destroy(flask.gameObject);
         }
 
-        foreach (var spray in FindObjectsOfType<ParticleSystem>())
+        foreach (var spray in FindObjectsOfType<ParticleSystem>(true))
         {
-            Destroy(spray.gameObject);
+            if (spray.gameObject.name.StartsWith("Spray"))
+            {
+                Destroy(spray.gameObject);
+            }
         }
     }
 

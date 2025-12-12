@@ -97,7 +97,7 @@ public class GameManager : MonoBehaviour
             case GameState.Playing:
                 if (openingCanvas) openingCanvas.SetActive(false);
                 if (gameClearRig) gameClearRig.SetActive(false);
-                if (gameOverCtrl)  gameOverCtrl.HideGameOverRig();
+                if (gameOverCtrl) gameOverCtrl.HideGameOverRig();
                 break;
 
             case GameState.GameOver:
@@ -105,7 +105,7 @@ public class GameManager : MonoBehaviour
                 if (gameClearRig) gameClearRig.SetActive(false);
 
                 // GameOver 상태 진입 시 컨트롤러 작동
-                if (gameOverCtrl)  gameOverCtrl.TriggerGameOver();
+                if (gameOverCtrl) gameOverCtrl.TriggerGameOver();
                 break;
 
             case GameState.GameClear:

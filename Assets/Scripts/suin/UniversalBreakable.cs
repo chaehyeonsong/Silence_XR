@@ -288,6 +288,19 @@ public class UniversalBreakable : MonoBehaviour
                 if (c != null) c.enabled = false;
             }
         }
+
+        // Removes liquid flowing line (LineRenderer)
+        Transform Flow = transform.Find("FlowMobile(Clone)");
+        if (Flow != null)
+        {
+            Flow.gameObject.SetActive(false);
+        }
+        
+        // Removes splash effects of liquid flowing out
+        foreach (var spray in FindObjectsOfType<ParticleSystem>())
+        {
+            spray.gameObject.SetActive(false);
+        }
     }
 
     private void DisableLiquidMasks()

@@ -68,6 +68,9 @@ public class GameController : MonoBehaviour
     //VR codes, which I HATE, shithead
     private void OnEnable()
     {
+        Destroy(Linetracer);
+        Destroy(liquid_checker);
+        Destroy(liquid_puzzle);
         DestroyAllRemnants();
 
         if (rightPrimary != null && rightPrimary.action != null)
@@ -101,6 +104,9 @@ public class GameController : MonoBehaviour
 
     private void Awake()
     {
+        Destroy(Linetracer);
+        Destroy(liquid_checker);
+        Destroy(liquid_puzzle);
         DestroyAllRemnants();
 
         if (rightPrimary != null && rightPrimary.action != null)
@@ -271,8 +277,7 @@ public class GameController : MonoBehaviour
         Destroy(Linetracer);
         Destroy(liquid_checker);
         BreakAllFlasks();
-        Debug.Log("BreakAllFlasks Called");
-
+        
         yield return new WaitForSeconds(flaskBreakDelay + 0.2f);
 
         Destroy(liquid_puzzle);
@@ -291,9 +296,12 @@ public class GameController : MonoBehaviour
             Destroy(flask.gameObject);
         }
         
-        foreach (var spray in FindObjectsOfType<ParticleSystem>())
+        foreach (var spray in FindObjectsOfType<ParticleSystem>(true))
         {
-            Destroy(spray.gameObject);
+            if (spray.gameObject.name.StartsWith("Spray"))
+            {
+                Destroy(spray.gameObject);
+            }
         }
     }
 
@@ -303,11 +311,6 @@ public class GameController : MonoBehaviour
         {
             universalBreakable = flask.GetComponent<UniversalBreakable>();
             universalBreakable.Break();
-        }
-
-        foreach (var spray in FindObjectsOfType<ParticleSystem>())
-        {
-            Destroy(spray.gameObject);
         }
     }
 
