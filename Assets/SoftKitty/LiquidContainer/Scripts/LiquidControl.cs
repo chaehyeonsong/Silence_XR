@@ -107,6 +107,10 @@ namespace SoftKitty.LiquidContainer
         {
             return Volumn * WaterLine;
         }
+        public float GetCurrentVolumn()//Return the total current volumn of the liquid
+        {
+            return Volumn;
+        }
 
         public float GetCurrentVolumnByColor(Color _colorTop, Color _colorBottom)//Return the current volumn of the liquid with certain colors
         {

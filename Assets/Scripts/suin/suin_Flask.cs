@@ -282,7 +282,7 @@ public class suin_Flask : MonoBehaviour
             bool hasLiquid = true;
             if (liquid != null)
             {
-                fillNorm = Mathf.Clamp01(liquid.WaterLine);
+                fillNorm = Mathf.Clamp01(liquid.GetCurrentVolumn());
                 hasLiquid = fillNorm > emptyWaterLineThreshold;
             }
 
@@ -374,23 +374,29 @@ public class suin_Flask : MonoBehaviour
             return;
         if (liquid == null) return;
 
-        float fillNorm = Mathf.Clamp01(liquid.WaterLine);
+        float fillNorm = Mathf.Clamp01(liquid.GetCurrentVolumn());
+        Debug.LogWarning($"liquid.WaterLine: {liquid.GetCurrentVolumn()}");
+        Debug.LogWarning($"fillNorm: {fillNorm}");
         bool hasLiquid = fillNorm > emptyWaterLineThreshold;
         if (!hasLiquid) return;
 
         bool isPouring = liquid.IsPouring && liquid.FlowSize >= pourMinFlowForSound;
         if (!isPouring) return;
 
-        if (Time.time - _lastPourPlayTime < pourMinInterval)
-            return;
+        Debug.LogWarning("3");
 
+        if (Time.time - _lastPourPlayTime < pourMinInterval)
+            return; 
+        Debug.LogWarning("4");
         float flowNorm = Mathf.Clamp01(liquid.FlowSize);
         float volScale = pourMaxVolume * flowNorm * fillNorm;
         float pitchScale = Mathf.Lerp(pourPitchEmpty, pourPitchFull, fillNorm);
 
         if (reactive.TryPlayByNameWithPitch(pourEntryName, volScale, pitchScale, pourPitchJitter))
         {
-            suin_FlagHub.instance.SetWaterSoundFlag(true);
+
+            Debug.LogWarning("5");
+;            suin_FlagHub.instance.SetWaterSoundFlag(true);
             _lastPourPlayTime = Time.time;
 
             if (showDebug)
@@ -412,7 +418,7 @@ public class suin_Flask : MonoBehaviour
         bool hasLiquid = true;
         if (liquid != null)
         {
-            fillNorm = Mathf.Clamp01(liquid.WaterLine);
+            fillNorm = Mathf.Clamp01(liquid.GetCurrentVolumn());
             hasLiquid = fillNorm > emptyWaterLineThreshold;
         }
 
