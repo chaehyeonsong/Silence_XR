@@ -15122,6 +15122,12 @@ MonoBehaviour:
     minCooldown: 0.5
     volumeMul: 1
     anchor: {fileID: 0}
+  - name: pour
+    key: flask-pour
+    allowOverlap: 0
+    minCooldown: 0.5
+    volumeMul: 1
+    anchor: {fileID: 0}
   defaultAnchor: {fileID: 6786166290527911297}
 --- !u!114 &1575131129077233820
 MonoBehaviour:

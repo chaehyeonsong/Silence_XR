@@ -71,9 +71,13 @@ public class suin_ReactiveSound : MonoBehaviour
         Transform overrideAnchor = null
     )
     {
+        
+        Debug.LogWarning("6");
         if (SM == null || string.IsNullOrEmpty(entryName)) return false;
 
         var e = FindEntry(entryName);
+        Debug.LogWarning("7");
+
         if (e == null || string.IsNullOrEmpty(e.key)) return false;
 
         float vol = Mathf.Clamp01(e.volumeMul * volumeScale);
@@ -86,6 +90,7 @@ public class suin_ReactiveSound : MonoBehaviour
         var anchor = overrideAnchor
             ? overrideAnchor
             : (e.anchor ? e.anchor : (defaultAnchor ? defaultAnchor : transform));
+        Debug.LogWarning("8");
 
         return suin_SoundManager.instance.PlayAtSourceWithPitch(
             e.key,
