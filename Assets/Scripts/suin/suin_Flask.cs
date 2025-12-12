@@ -100,7 +100,7 @@ public class suin_Flask : MonoBehaviour
 
     [Header("Pouring Sound")]
     public bool enablePourSound = true;
-    public string pourEntryName = "pour";
+    public string pourEntryName = "flask-pour";
     [Tooltip("pour 사운드 최소 재생 간격(초)")]
     [Min(0f)] public float pourMinInterval = 0.15f;
     [Tooltip("flowSize가 이 값 이상일 때부터 pour 사운드")]
@@ -282,7 +282,7 @@ public class suin_Flask : MonoBehaviour
             bool hasLiquid = true;
             if (liquid != null)
             {
-                fillNorm = Mathf.Clamp01(liquid.GetCurrentVolumn());
+                fillNorm = Mathf.Clamp01(liquid.WaterLine);
                 hasLiquid = fillNorm > emptyWaterLineThreshold;
             }
 
@@ -374,9 +374,7 @@ public class suin_Flask : MonoBehaviour
             return;
         if (liquid == null) return;
 
-        float fillNorm = Mathf.Clamp01(liquid.GetCurrentVolumn());
-        Debug.LogWarning($"liquid.WaterLine: {liquid.GetCurrentVolumn()}");
-        Debug.LogWarning($"fillNorm: {fillNorm}");
+        float fillNorm = Mathf.Clamp01(liquid.WaterLine);
         bool hasLiquid = fillNorm > emptyWaterLineThreshold;
         if (!hasLiquid) return;
 
@@ -396,7 +394,7 @@ public class suin_Flask : MonoBehaviour
         {
 
             Debug.LogWarning("5");
-;            suin_FlagHub.instance.SetWaterSoundFlag(true);
+;           suin_FlagHub.instance.SetWaterSoundFlag(true);
             _lastPourPlayTime = Time.time;
 
             if (showDebug)
@@ -418,7 +416,7 @@ public class suin_Flask : MonoBehaviour
         bool hasLiquid = true;
         if (liquid != null)
         {
-            fillNorm = Mathf.Clamp01(liquid.GetCurrentVolumn());
+            fillNorm = Mathf.Clamp01(liquid.WaterLine);
             hasLiquid = fillNorm > emptyWaterLineThreshold;
         }
 

@@ -132,7 +132,11 @@ public class suin_SoundManager : MonoBehaviour
         float extraPitchJitter = 0.05f
     )
     {
+        Debug.LogWarning("9");
+
         if (!source) return false;
+        Debug.LogWarning("10");
+
         return PlayInternal(key, source, Vector3.zero, volScale, minCooldown, Mode.Source, pitchScale, extraPitchJitter);
     }
 
@@ -181,12 +185,17 @@ public class suin_SoundManager : MonoBehaviour
             key = candidates[Random.Range(0, candidates.Count)];
         }
 
+        Debug.LogWarning("11");
+
         // 🔹 여기서 key 하나에 대해 여러 clip 중 하나를 랜덤 선택
         if (_map == null || !_map.TryGetValue(key, out var clipList) || clipList == null || clipList.Count == 0)
             return false;
 
         var clip = clipList[Random.Range(0, clipList.Count)];
+        Debug.LogWarning("12");
+
         if (!clip) return false;
+        Debug.LogWarning("13");
 
         float now = Time.unscaledTime;
 
