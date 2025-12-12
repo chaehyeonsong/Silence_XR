@@ -21,6 +21,8 @@ public class GameManager : MonoBehaviour
     public GameObject openingCanvas;          // Opening UI Canvas
     public GameOverController gameOverCtrl;   // Game over arms + UI controller
     public GameObject gameClearRig;
+    public RaySwitch LeftController;
+    public RaySwitch RightController;
 
     void Awake()
     {
@@ -91,12 +93,30 @@ public class GameManager : MonoBehaviour
                 if (openingCanvas) openingCanvas.SetActive(true);
                 if (gameClearRig) gameClearRig.SetActive(false);
                 if (gameOverCtrl) gameOverCtrl.HideGameOverRig();
+
+                // Enables ray interactor during gameplay
+                if (LeftController && RightController)
+                {
+                    LeftController.RayOn();
+                    RightController.RayOn();
+                    LeftController.isGamePlaying = false;
+                    RightController.isGamePlaying = false;
+                }
                 break;
 
             case GameState.Playing:
                 if (openingCanvas) openingCanvas.SetActive(false);
                 if (gameClearRig) gameClearRig.SetActive(false);
                 if (gameOverCtrl) gameOverCtrl.HideGameOverRig();
+                
+                // Disables ray interactor during gameplay
+                if (LeftController && RightController)
+                {
+                    LeftController.RayOff();
+                    RightController.RayOff();
+                    LeftController.isGamePlaying = true;
+                    RightController.isGamePlaying = true;
+                }
 
                 // 🔥 [핵심 수정] 게임 시작(Playing) 시 Spawner를 찾아서 "리셋" 시킵니다.
                 // 이걸 해줘야 변수와 코루틴이 초기화되어 몬스터가 다시 나옵니다.
@@ -116,6 +136,15 @@ public class GameManager : MonoBehaviour
                 if (gameClearRig) gameClearRig.SetActive(false);
 
                 if (gameOverCtrl) gameOverCtrl.TriggerGameOver();
+
+                // Enables ray interactor during gameplay
+                if (LeftController && RightController)
+                {
+                    LeftController.RayOn();
+                    RightController.RayOn();
+                    LeftController.isGamePlaying = false;
+                    RightController.isGamePlaying = false;
+                }
                 break;
 
             case GameState.GameClear:
@@ -123,6 +152,15 @@ public class GameManager : MonoBehaviour
                 if (gameOverCtrl) gameOverCtrl.HideGameOverRig();
 
                 if (gameClearRig) gameClearRig.SetActive(true);
+
+                // Enables ray interactor during gameplay
+                if (LeftController && RightController)
+                {
+                    LeftController.RayOn();
+                    RightController.RayOn();
+                    LeftController.isGamePlaying = false;
+                    RightController.isGamePlaying = false;
+                }
                 break;
         }
     }
