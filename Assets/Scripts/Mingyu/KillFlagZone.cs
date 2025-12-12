@@ -32,12 +32,12 @@ public class KillFlagZone : MonoBehaviour
         // [수정됨] 여기서 바로 게임오버를 시키지 않습니다!
         // 거미가 떨어져서 도착하면 그때 거미가 직접 신호를 보냅니다.
         
-        /* if (anyMonsterFound && hub != null)
+        if (anyMonsterFound && hub != null)
         {
              // hub.TriggerPlayerKillFlag(); // <--- 이거 삭제!!
              Debug.Log($"[KillFlagZone] {name} 몬스터 감지 → 공격 시작 명령만 내림 (게임오버는 몬스터가 처리)");
         }
-        */
+        
     }
 
     bool HandleMonstersInZoneXZ()

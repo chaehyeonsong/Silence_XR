@@ -39,7 +39,7 @@ public class Spawner : MonoBehaviour
     [Header("Audio Settings")]
     public AudioClip zombieSpawnClip;
     public AudioClip spiderSpawnClip;
-    [Range(0f, 1f)] public float soundVolume = 1.0f; 
+    [Range(0f, 1f)] public float soundVolume = 1.0f;
 
     // 내부 변수들
     private List<GameObject> activeMonsters = new List<GameObject>();
@@ -47,48 +47,61 @@ public class Spawner : MonoBehaviour
     private int failedSpawnStreak = 0;
     private bool spawnCycleActive = false;
 
+    // ★ 코루틴 제어용 변수
+    private Coroutine spawnCoroutine;
+
     void Start()
     {
+        // 처음 시작할 때도 리셋 로직을 통해 시작
+        ResetSpawner();
+    }
+
+    // ★★★ [GameManager에서 호출할 리셋 함수] ★★★
+    public void ResetSpawner()
+    {
+        // 1. 기존 몬스터 싹 정리
+        ClearAllMonsters();
+
+        // 2. 변수 초기화 (Start 값으로 복구)
         currentSpawnChance = firstSpawnChance;
         failedSpawnStreak = 0;
         spawnCycleActive = false;
-        StartCoroutine(SpawnRoutine());
+
+        // 3. 실행 중이던 코루틴을 강제로 끄고 새로 시작!
+        if (spawnCoroutine != null) StopCoroutine(spawnCoroutine);
+        spawnCoroutine = StartCoroutine(SpawnRoutine());
+
+        Debug.Log("🔄 [Spawner] 리셋 완료 (재시작 준비 끝)");
     }
 
     IEnumerator SpawnRoutine()
     {
+        // 재시작 시 안전하게 1초 대기 후 로직 시작
+        yield return new WaitForSeconds(1.0f);
+
         while (true)
         {
-            // 1차 체크: 루프 시작 시점
+            // 게임 중이 아니면 대기
             if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameManager.GameState.Playing)
             {
                 yield return new WaitForSeconds(1.0f);
-                continue; 
-            }
-
-            // [기본 로직] 시간 대기 (예: 10초)
-            yield return new WaitForSeconds(spawnInterval);
-
-            // 🛑 [핵심 수정] 대기하는 동안 게임오버가 되었을 수 있으므로 여기서 한 번 더 체크!
-            if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameManager.GameState.Playing)
-            {
-                // 게임 중이 아니면 스폰 로직을 실행하지 않고 위로 돌아감
-                continue; 
-            }
-
-            // 몬스터 리스트 정리 (죽은 애들 제거)
-            activeMonsters.RemoveAll(m => m == null);
-
-            // 최대 마리 수 체크
-            if (activeMonsters.Count >= maxMonsters)
-            {
-                Debug.Log($"[Spawner] 몬스터 가득 참 ({activeMonsters.Count}/{maxMonsters}), 스폰 스킵");
                 continue;
             }
 
-            // 좀비 생존 여부 체크
-            bool hasZombie = activeMonsters.Exists(m => m != null && m.GetComponent<ZombieNavTarget>() != null);
+            yield return new WaitForSeconds(spawnInterval);
 
+            // 대기 후 재확인
+            if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameManager.GameState.Playing)
+            {
+                continue;
+            }
+
+            activeMonsters.RemoveAll(m => m == null);
+
+            if (activeMonsters.Count >= maxMonsters) continue;
+
+            // 좀비 생존 시 스폰 중단 로직
+            bool hasZombie = activeMonsters.Exists(m => m != null && m.GetComponent<ZombieNavTarget>() != null);
             if (hasZombie)
             {
                 if (spawnCycleActive) Debug.Log("[Spawner] 좀비 생존 중 → 사이클 리셋");
@@ -98,13 +111,11 @@ public class Spawner : MonoBehaviour
                 continue;
             }
 
-            // 사이클 시작
             if (!spawnCycleActive)
             {
                 spawnCycleActive = true;
                 currentSpawnChance = firstSpawnChance;
                 failedSpawnStreak = 0;
-                Debug.Log("[Spawner] 스폰 사이클 시작");
             }
 
             TrySpawnMonsterWithChance();
@@ -113,7 +124,6 @@ public class Spawner : MonoBehaviour
 
     void TrySpawnMonsterWithChance()
     {
-        // 🛑 [안전 장치] 혹시 모르니 스폰 직전에도 한 번 더 체크 (선택 사항이지만 안전함)
         if (GameManager.Instance != null && GameManager.Instance.CurrentState != GameManager.GameState.Playing) return;
 
         float roll = Random.value;
@@ -121,10 +131,9 @@ public class Spawner : MonoBehaviour
 
         if (pass)
         {
-            bool spawned = SpawnRandomMonster();
-            if (spawned)
+            if (SpawnRandomMonster())
             {
-                Debug.Log("[Spawner] ▶ 스폰 성공! 사이클 종료");
+                Debug.Log($"[Spawner] 스폰 성공! (확률: {currentSpawnChance * 100}%)");
                 spawnCycleActive = false;
                 currentSpawnChance = firstSpawnChance;
                 failedSpawnStreak = 0;
@@ -145,8 +154,7 @@ public class Spawner : MonoBehaviour
         failedSpawnStreak++;
         if (failedSpawnStreak == 1) currentSpawnChance = secondSpawnChance;
         else currentSpawnChance = thirdSpawnChance;
-        
-        Debug.Log($"[Spawner] 실패 → 확률 증가: {currentSpawnChance}");
+        Debug.Log($"[Spawner] 꽝 → 확률 증가: {currentSpawnChance * 100}%");
     }
 
     bool SpawnRandomMonster()
@@ -175,8 +183,6 @@ public class Spawner : MonoBehaviour
         }
 
         PlayLoudSpawnSound(zombieSpawnClip, point.position, soundVolume);
-
-        Debug.Log($"🧟 좀비 스폰됨: {point.name}");
         return true;
     }
 
@@ -199,42 +205,31 @@ public class Spawner : MonoBehaviour
         }
 
         PlayLoudSpawnSound(spiderSpawnClip, point.position, soundVolume);
-
-        Debug.Log($"🕷️ 스파이더 스폰됨: {point.name}");
         return true;
     }
 
     void PlayLoudSpawnSound(AudioClip clip, Vector3 position, float volume)
     {
         if (clip == null) return;
-
         GameObject audioObj = new GameObject("SpawnSound_Loud");
         audioObj.transform.position = position;
-
         AudioSource source = audioObj.AddComponent<AudioSource>();
         source.clip = clip;
         source.volume = volume;
-
         source.spatialBlend = 0.8f;      
         source.minDistance = 20.0f;      
         source.maxDistance = 150.0f;     
         source.rolloffMode = AudioRolloffMode.Linear; 
-
         source.Play();
         Destroy(audioObj, clip.length);
     }
 
-    // GameManager에서 호출하는 함수
     public void ClearAllMonsters()
     {
         foreach (GameObject monster in activeMonsters)
         {
-            if (monster != null)
-            {
-                Destroy(monster);
-            }
+            if (monster != null) Destroy(monster);
         }
         activeMonsters.Clear();
-        Debug.Log("🧹 [Spawner] 모든 몬스터 제거 완료 (Game Over/Clear)");
     }
 }
