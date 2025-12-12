@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using UnityEditor.PackageManager;
 using UnityEngine;
 
 public class suin_FlagHub : MonoBehaviour
@@ -37,7 +38,8 @@ public class suin_FlagHub : MonoBehaviour
 
     // ===== Light 상태 이벤트 (On/Off 상태를 저장하고 변화만 알림) =====
     public event Action<bool> OnLightStateChanged; // true=On, false=Off
-
+    
+    [SerializeField]
     private bool _lightOn;
     public bool LightOn => _lightOn;
 

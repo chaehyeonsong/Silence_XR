@@ -15111,13 +15111,13 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   entries:
   - name: grab
-    key: FlaskGrab
+    key: flask-grab
     allowOverlap: 0
     minCooldown: 0.15
     volumeMul: 1
     anchor: {fileID: 0}
   - name: motion
-    key: FlaskMove
+    key: flask-move
     allowOverlap: 0
     minCooldown: 0.5
     volumeMul: 1
