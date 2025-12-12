@@ -15205,22 +15205,23 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a59055d9bf614fd4fa6bb49b219b73be, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  breakVelocityThreshold: 3
-  onlyBreakWhenReleased: 1
+  breakVelocityThreshold: 2.5
+  onlyBreakWhenReleased: 0
   intactVisual: {fileID: 0}
   shardsRoot: {fileID: 0}
-  enableShardPhysics: 0
+  enableShardPhysics: 1
   shardUseGravity: 1
-  shardRandomVelocity: 0.2
-  shardRandomAngularVelocity: 1
-  impactSoundVelocityThreshold: 1
-  impactClip: {fileID: 0}
-  impactVolume: 1
+  shardRandomVelocity: 4
+  shardRandomAngularVelocity: 4
+  impactSoundVelocityThreshold: 0.4
+  impactClip: {fileID: 8300000, guid: 3da4c63abac5fb54d8d9b37fc492ba07, type: 3}
+  impactVolume: 0.4
   impactSoundCooldown: 0.1
-  breakClip: {fileID: 0}
-  breakVolume: 1
-  autoDestroyShards: 0
-  shardLifetime: 10
+  breakClip: {fileID: 8300000, guid: 4bbdc8dbce97ca544a04ffdd3b809b90, type: 3}
+  breakVolume: 0
+  autoDestroyShards: 1
+  shardLifetime: 2
+  gameController: {fileID: 6208232713789183292, guid: e6972635dfe958546bb458a4cd9f57a0, type: 3}
   hasBroken: 0
 --- !u!1001 &416795024359745881
 PrefabInstance:

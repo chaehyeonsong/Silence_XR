@@ -21,12 +21,12 @@ public class FlaskCollisionDetector : MonoBehaviour
     private void OnCollisionEnter(Collision collision)
     {
         Debug.Log("Flask collided");
+        Debug.Log(collision.relativeVelocity.magnitude);
         if (parent != null)
         {
-            if (rb != null && rb.velocity.magnitude >= speedlimit)
+            if (rb != null && collision.relativeVelocity.magnitude >= speedlimit)
             {
                 parent.speedticket = true;
-                
             }
         }
 

@@ -14,21 +14,23 @@ public class LineColorManager : MonoBehaviour
     void Start()
     {
 
-        EasyTrim.SetActive(false);
-        NormalTrim.SetActive(false);
-        HardTrim.SetActive(false);
-        InsaneTrim.SetActive(false);
+        Reset();
 
     }
 
     void Awake()
     {
 
+        Reset();
+
+    }
+
+    public void Reset()
+    {
         EasyTrim.SetActive(false);
         NormalTrim.SetActive(false);
         HardTrim.SetActive(false);
         InsaneTrim.SetActive(false);
-
     }
 
     public void SelectedEasy()

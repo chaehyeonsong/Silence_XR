@@ -1,3 +1,4 @@
+using SoftKitty.LiquidContainer;
 using System.Collections;
 using UnityEngine;
 using UnityEngine.SceneManagement;
@@ -15,6 +16,7 @@ public class GameOverController : MonoBehaviour
     public Vector3 rightStartLocalPos, rightEndLocalPos;
 
     public GameObject gameOverUI;
+    public GameObject jp_GamePrefab;
     public float armMoveDuration = 1.2f;
 
     bool running = false; // flag to prevent multiple triggers
@@ -22,9 +24,29 @@ public class GameOverController : MonoBehaviour
     public void TriggerGameOver()
     {
         if (!running)
+        {
+            jp_GamePrefab.SetActive(false);
+            DestroyAllRemnants();
             StartCoroutine(GameOverSequence());
-             // Play sounds
+            // Play sounds
             FindObjectOfType<GameOverAudio>().PlayGameOverSounds();
+        }
+    }
+
+    void DestroyAllRemnants() // Any remaining flask or spray get destroyed
+    {
+        foreach (var flask in FindObjectsOfType<LiquidControl>())
+        {
+            Destroy(flask.gameObject);
+        }
+
+        foreach (var spray in FindObjectsOfType<ParticleSystem>(true))
+        {
+            if (spray.gameObject.name.StartsWith("Spray"))
+            {
+                Destroy(spray.gameObject);
+            }
+        }
     }
 
     // turn off gameover rig
@@ -95,11 +117,11 @@ public class GameOverController : MonoBehaviour
             audio.StopGameOverSounds();
     }
 
-    void Update()
-    {
-        if (Input.GetKeyDown(KeyCode.P))   // DEBUG: press G to test
-        {
-            TriggerGameOver();
-        }
-    }
+    //void Update()
+    //{
+    //    if (Input.GetKeyDown(KeyCode.P))   // DEBUG: press G to test
+    //    {
+    //        TriggerGameOver();
+    //    }
+    //}
 }   

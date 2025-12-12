@@ -16,6 +16,8 @@ public class Communicator_Liquid : MonoBehaviour
     public float flask_adjustment;
     [Tooltip("Where to place mixing flask")]
     public Vector3 mixing_flask_position;
+    [Tooltip("Where to place color sign")]
+    public Vector3 sign_offset;
     [HideInInspector]
     public Color target = Color.black;
     [HideInInspector]
@@ -126,7 +128,7 @@ public class Communicator_Liquid : MonoBehaviour
             if (isOdd)
             {
                 float init_angle = pi / 2 + flask_adjustment_rad * (num_flask - 1) / 2;
-                Debug.Log(init_angle * Mathf.Rad2Deg);
+                //Debug.Log(init_angle * Mathf.Rad2Deg);
 
                 Vector3 temp_displacement = new Vector3(Mathf.Cos(flask_movement + init_angle)
                                                         * Mathf.Abs(mixing_flask_position.z), 
@@ -164,9 +166,8 @@ public class Communicator_Liquid : MonoBehaviour
         
         gameController.target_color = target;
 
-        Vector3 goal_offset = new Vector3(0f, 0.2f, 0.2f);
         GameObject color_sign = Instantiate(sign_prefab, transform);
-        color_sign.transform.position += goal_offset;
+        color_sign.transform.position += sign_offset;
         color_sign.GetComponent<Renderer>().material.color = target;
         
         //Instantiate target flask
