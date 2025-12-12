@@ -249,6 +249,7 @@ public class UniversalBreakable : MonoBehaviour
 
         // 1) 소리
         //PlayBreakSound(collision); // GameController plays break sound regardless of position
+        suin_FlagHub.instance.SetPlayerSoundFlag(true);
 
         // 2) 원본(통짜) 숨기기 (Renderer/Collider만 비활성화)
         HideIntactVisual();
