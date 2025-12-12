@@ -450,6 +450,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c620c33d239104028bbc88065abd3f3d, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  maxDropDistance: 2.3
+  stopAboveGround: 5
   lockToTarget: 0
   targetPoint: {fileID: 0}
   ceilingMoveSpeed: 1

@@ -75,10 +75,9 @@ public class GameManager : MonoBehaviour
         CurrentState = newState;
         Debug.Log("Game State → " + newState);
 
-        // ✅ [추가] 게임 오버 혹은 게임 클리어 시 몬스터 싹 지우기 로직
+        // 1. 상태 변경에 따른 몬스터 정리 (Game Over / Clear 시)
         if (newState == GameState.GameOver || newState == GameState.GameClear)
         {
-            // 씬에 있는 Spawner를 찾아서 청소 명령 내림
             Spawner spawner = FindObjectOfType<Spawner>();
             if (spawner != null)
             {
@@ -98,13 +97,24 @@ public class GameManager : MonoBehaviour
                 if (openingCanvas) openingCanvas.SetActive(false);
                 if (gameClearRig) gameClearRig.SetActive(false);
                 if (gameOverCtrl) gameOverCtrl.HideGameOverRig();
+
+                // 🔥 [핵심 수정] 게임 시작(Playing) 시 Spawner를 찾아서 "리셋" 시킵니다.
+                // 이걸 해줘야 변수와 코루틴이 초기화되어 몬스터가 다시 나옵니다.
+                Spawner spawner = FindObjectOfType<Spawner>();
+                if (spawner != null)
+                {
+                    spawner.ResetSpawner(); 
+                }
+                else
+                {
+                    Debug.LogWarning("[GameManager] Spawner를 찾을 수 없습니다!");
+                }
                 break;
 
             case GameState.GameOver:
                 if (openingCanvas) openingCanvas.SetActive(false);
                 if (gameClearRig) gameClearRig.SetActive(false);
 
-                // GameOver 상태 진입 시 컨트롤러 작동
                 if (gameOverCtrl) gameOverCtrl.TriggerGameOver();
                 break;
 
@@ -114,8 +124,6 @@ public class GameManager : MonoBehaviour
 
                 if (gameClearRig) gameClearRig.SetActive(true);
                 break;
-
-
         }
     }
 }
