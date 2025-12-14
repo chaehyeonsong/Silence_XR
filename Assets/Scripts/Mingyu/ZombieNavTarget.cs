@@ -25,12 +25,9 @@ public class ZombieNavTarget : MonoBehaviour
     public Transform targetPoint;            // 좀비가 달려갈 목적지
     public float arriveDistance = 0.35f;     // 도착 판정 거리
 
-    // ==========================================
-    // ▼▼▼ 여기에 변수가 선언되어 있습니다 ▼▼▼
-    // ==========================================
     [Header("Game Over Settings")]
     [Tooltip("이 거리 안에 들어오면 게임오버 발동")]
-    public float killTriggerDistance = 1.0f; // 🔥 인스펙터에 보여야 함
+    public float killTriggerDistance = 1.0f; 
     private bool hasTriggeredGameOver = false; // 중복 호출 방지용
 
     [Header("Idle Wander Settings (경계 전 상태)")]
@@ -65,7 +62,6 @@ public class ZombieNavTarget : MonoBehaviour
         agent = GetComponent<NavMeshAgent>();
         audioSource = GetComponent<AudioSource>();
 
-        // NavMeshAgent가 없는 경우를 대비한 안전장치
         if (agent != null)
         {
             agent.stoppingDistance = arriveDistance;
@@ -80,14 +76,39 @@ public class ZombieNavTarget : MonoBehaviour
     void OnEnable()
     {
         if (!useAlert) return;
-        hub = suin_FlagHub.instance;
-        if (hub != null)
+        // Start보다 먼저 실행될 수 있으므로 여기서도 체크
+        if (suin_FlagHub.instance != null) SubscribeToHub();
+    }
+
+    void Start()
+    {
+        // 1. 구독 확인 (OnEnable에서 못 했을 경우)
+        if (hub == null && suin_FlagHub.instance != null) SubscribeToHub();
+
+        // 2. [수정됨] 태어나자마자 "지금 불 켜져 있나?" 확인
+        // 불이 이미 켜져 있다면, 이벤트를 기다리지 않고 즉시 추적 모드로 진입합니다.
+        if (useAlert && hub != null && hub.LightOn)
         {
-            hub.OnMoveSlightFlag += OnAlertFlag;
-            hub.OnPlayerSoundFlag += OnAlertFlag;
-            hub.OnWaterSoundFlag += OnAlertFlag;
-            hub.OnLightStateChanged += OnAlertFlag;
+            Debug.Log($"🧟 [Zombie] {name}: 시작부터 불이 켜져있음 감지! 즉시 추적.");
+            // 강제로 True 신호를 받은 것처럼 처리
+            OnAlertFlag(true); 
         }
+
+        // 3. 타겟 설정 확인
+        if (targetPoint != null && (isAlerted || lockToTarget))
+        {
+            SetDestinationToTarget();
+        }
+    }
+
+    // 허브 이벤트 구독 함수
+    void SubscribeToHub()
+    {
+        hub = suin_FlagHub.instance;
+        hub.OnMoveSlightFlag += OnAlertFlag;
+        hub.OnPlayerSoundFlag += OnAlertFlag;
+        hub.OnWaterSoundFlag += OnAlertFlag;
+        hub.OnLightStateChanged += OnAlertFlag;
     }
 
     void OnDisable()
@@ -102,31 +123,34 @@ public class ZombieNavTarget : MonoBehaviour
         }
     }
 
+    // ==========================================
+    // 🔥 [핵심 수정] 신호 처리 로직
+    // ==========================================
     void OnAlertFlag(bool v)
     {
         if (!useAlert) return;
-        if (isReturningHome) return;
-        if (lockToTarget) return;   
-
-        isAlerted = v;
+        if (lockToTarget) return; // 이미 죽이러 가는 중이면 다른 신호 무시
 
         if (v)
         {
-            noFlagTimer = 0f;
+            // 신호가 켜짐 (True)
+            // [수정] "집에 가는 중(isReturningHome)"이었더라도, 즉시 취소하고 다시 추적합니다.
+            isReturningHome = false; 
+            isAlerted = true;
+            noFlagTimer = 0f; // 타이머 리셋
+            
             if (targetPoint != null)
                 SetDestinationToTarget();
         }
-        else if (!v && useRandomWander)
+        else
         {
-            if(agent != null) agent.ResetPath();
-        }
-    }
-
-    void Start()
-    {
-        if (targetPoint != null && isAlerted)
-        {
-            SetDestinationToTarget();
+            // 신호가 꺼짐 (False)
+            // 바로 집에 가는 게 아니라, Update에서 타이머가 찰 때까지 기다립니다.
+            isAlerted = false;
+            if (!v && useRandomWander && agent != null)
+            {
+                agent.ResetPath();
+            }
         }
     }
 
@@ -134,31 +158,28 @@ public class ZombieNavTarget : MonoBehaviour
     {
         if (agent == null) return;
 
-        // ▼▼▼ [수정 1] 타겟과의 거리를 미리 계산 (타겟이 있을 때만) ▼▼▼
+        // 거리 계산
         float dist = 0f;
         if (targetPoint != null)
         {
             dist = Vector3.Distance(transform.position, targetPoint.position);
         }
 
-        // ▼▼▼ [수정 2] 게임오버 체크 로직을 '공통'으로 빼냄 ▼▼▼
-        // 조건: 타겟이 있고 + (죽음 플래그 OR 경계 상태) + 거리가 가까움 + 아직 게임오버 안 됨
+        // --- 게임오버 체크 ---
         if (targetPoint != null && (lockToTarget || isAlerted))
         {
             if (dist <= killTriggerDistance && !hasTriggeredGameOver)
             {
                 hasTriggeredGameOver = true;
-                Debug.Log($"🧟 [Zombie] 잡았다! (상태: Lock={lockToTarget}, Alert={isAlerted}) 거리: {dist:F2}");
-
+                // Debug.Log($"🧟 [Zombie] 잡았다! 거리: {dist:F2}");
                 if (suin_FlagHub.instance != null)
                 {
                     suin_FlagHub.instance.TriggerPlayerKillFlag();
                 }
             }
         }
-        // ▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲▲
 
-        // 1. 죽는 플래그 (Lock Mode) - 이동 로직
+        // 1. 죽는 플래그 (Lock Mode) - 무조건 추적
         if (lockToTarget)
         {
             isReturningHome = false;
@@ -168,7 +189,6 @@ public class ZombieNavTarget : MonoBehaviour
 
             if (targetPoint != null)
             {
-                // 도착 처리
                 if (dist <= arriveDistance)
                 {
                     if (!agent.isStopped)
@@ -184,7 +204,7 @@ public class ZombieNavTarget : MonoBehaviour
                     agent.SetDestination(targetPoint.position);
                 }
             }
-            return; // Lock 모드면 여기서 끝 (아래 로직 무시)
+            return; // Lock 모드면 여기서 끝
         }
         else
         {
@@ -192,12 +212,22 @@ public class ZombieNavTarget : MonoBehaviour
         }
 
         // 2. Calm Check (평화 복귀 체크)
-        noFlagTimer += Time.deltaTime;
-        if (!isReturningHome && noFlagTimer >= calmTimeout && spawnPoint != null)
+        // [수정] 경계 상태(isAlerted)가 아닐 때만 타이머가 흐릅니다.
+        // 불이 켜져 있는 동안(isAlerted == true)에는 타이머가 0으로 고정되어 집에 가지 않습니다.
+        if (!isAlerted && !isReturningHome)
         {
-            isReturningHome = true;
-            isAlerted = false;
-            agent.ResetPath();
+            noFlagTimer += Time.deltaTime;
+            if (noFlagTimer >= calmTimeout && spawnPoint != null)
+            {
+                isReturningHome = true;
+                isAlerted = false;
+                agent.ResetPath();
+                // Debug.Log("🧟 [Zombie] 너무 조용해서 집으로 돌아갑니다.");
+            }
+        }
+        else if (isAlerted)
+        {
+            noFlagTimer = 0f; // 경계 중이면 타이머 리셋
         }
 
         // 3. Return Home (집으로 복귀)
@@ -214,7 +244,7 @@ public class ZombieNavTarget : MonoBehaviour
 
             if (!agent.pathPending && agent.remainingDistance <= returnArriveDistance)
             {
-                Destroy(gameObject);
+                Destroy(gameObject); // 도착하면 사라짐
             }
             return;
         }

@@ -1,6 +1,5 @@
 using System;
 using System.Collections;
-using UnityEditor.PackageManager;
 using UnityEngine;
 
 public class suin_FlagHub : MonoBehaviour
@@ -18,16 +17,12 @@ public class suin_FlagHub : MonoBehaviour
     // 최근 alert 시점
     private float _lastAlertTime;
 
-    /// <summary>
-    /// 마지막 alert 이후 calmTimeout 이상 지나면 true
-    /// (지금은 좀비/거미가 안 쓰고 있어도 놔두면 됨)
-    /// </summary>
     public bool IsCalm
     {
         get { return Time.time - _lastAlertTime >= calmTimeout; }
     }
 
-    // ===== 펄스형 이벤트들 (호출될 때마다 true → pulseDuration 뒤 false) =====
+    // ===== 펄스형 이벤트들 =====
     public event Action<bool> OnMoveSlightFlag;
     public event Action<bool> OnPlayerSoundFlag;
     public event Action<bool> OnWaterSoundFlag;
@@ -36,14 +31,14 @@ public class suin_FlagHub : MonoBehaviour
     private Coroutine playerSoundCo;
     private Coroutine waterSoundCo;
 
-    // ===== Light 상태 이벤트 (On/Off 상태를 저장하고 변화만 알림) =====
-    public event Action<bool> OnLightStateChanged; // true=On, false=Off
+    // ===== Light 상태 이벤트 =====
+    public event Action<bool> OnLightStateChanged; 
     
     [SerializeField]
     private bool _lightOn;
     public bool LightOn => _lightOn;
 
-    // ===== Player Kill Flag (대상은 모름, 신호만 보냄) =====
+    // ===== Player Kill Flag =====
     public event Action OnPlayerKillFlag;
 
     void Awake()
@@ -61,39 +56,54 @@ public class suin_FlagHub : MonoBehaviour
 
     void Start()
     {
-        // 시작 시점 기준으로 calm 타이머 초기화
         _lastAlertTime = Time.time;
     }
 
-    /// <summary>
-    /// alert형 플래그가 true로 들어왔을 때 타이머 리셋
-    /// </summary>
     void MarkAlertFired()
     {
         _lastAlertTime = Time.time;
     }
 
     // ===============================
-    // Move Slight Flag
+    // Light State (핵심 수정 부분)
+    // ===============================
+
+    /// <summary>
+    /// 일반적인 상태 변경. 값이 변했을 때만 알림을 보냄.
+    /// </summary>
+    public void SetLightState(bool isOn)
+    {
+        if (_lightOn == isOn) return;
+        _lightOn = isOn;
+        OnLightStateChanged?.Invoke(_lightOn);
+    }
+
+    /// <summary>
+    /// [추가됨] 초기화용 강제 설정 함수.
+    /// 값이 같아도 강제로 이벤트를 발생시켜 좀비에게 현재 상태를 알림.
+    /// </summary>
+    public void ForceLightState(bool isOn)
+    {
+        _lightOn = isOn;
+        // 강제 호출
+        OnLightStateChanged?.Invoke(_lightOn);
+    }
+
+    // ===============================
+    // 기타 플래그 로직들 (기존 동일)
     // ===============================
     public void SetMoveSlightFlag(bool v)
     {
         OnMoveSlightFlag?.Invoke(v);
-
         if (v)
         {
             MarkAlertFired();
-
             if (moveSlightCo != null) StopCoroutine(moveSlightCo);
             moveSlightCo = StartCoroutine(ResetMoveSlightFlagAfterDelay());
         }
         else
         {
-            if (moveSlightCo != null)
-            {
-                StopCoroutine(moveSlightCo);
-                moveSlightCo = null;
-            }
+            if (moveSlightCo != null) { StopCoroutine(moveSlightCo); moveSlightCo = null; }
         }
     }
 
@@ -104,27 +114,18 @@ public class suin_FlagHub : MonoBehaviour
         moveSlightCo = null;
     }
 
-    // ===============================
-    // Player Sound Flag
-    // ===============================
     public void SetPlayerSoundFlag(bool v)
     {
         OnPlayerSoundFlag?.Invoke(v);
-
         if (v)
         {
             MarkAlertFired();
-
             if (playerSoundCo != null) StopCoroutine(playerSoundCo);
             playerSoundCo = StartCoroutine(ResetPlayerSoundFlagAfterDelay());
         }
         else
         {
-            if (playerSoundCo != null)
-            {
-                StopCoroutine(playerSoundCo);
-                playerSoundCo = null;
-            }
+            if (playerSoundCo != null) { StopCoroutine(playerSoundCo); playerSoundCo = null; }
         }
     }
 
@@ -135,27 +136,18 @@ public class suin_FlagHub : MonoBehaviour
         playerSoundCo = null;
     }
 
-    // ===============================
-    // Water Sound Flag
-    // ===============================
     public void SetWaterSoundFlag(bool v)
     {
         OnWaterSoundFlag?.Invoke(v);
-
         if (v)
         {
             MarkAlertFired();
-
             if (waterSoundCo != null) StopCoroutine(waterSoundCo);
             waterSoundCo = StartCoroutine(ResetWaterSoundFlagAfterDelay());
         }
         else
         {
-            if (waterSoundCo != null)
-            {
-                StopCoroutine(waterSoundCo);
-                waterSoundCo = null;
-            }
+            if (waterSoundCo != null) { StopCoroutine(waterSoundCo); waterSoundCo = null; }
         }
     }
 
@@ -166,48 +158,14 @@ public class suin_FlagHub : MonoBehaviour
         waterSoundCo = null;
     }
 
-    // ===============================
-    // Light State
-    // ===============================
-    /// <summary>
-    /// Light 상태를 저장하고, "변했을 때만" notify
-    /// </summary>
-    public void SetLightState(bool isOn)
-    {
-        if (_lightOn == isOn) return;   // 상태 변화 없으면 알림 X
-        _lightOn = isOn;
-        OnLightStateChanged?.Invoke(_lightOn);
-    }
-
-    // ===============================
-    // Player Kill Flag
-    // ===============================
-    /// <summary>
-    /// 누군가 죽어야 하는 상황이라고 알리는 플래그.
-    /// 대상은 여기서 고르지 않고, OnPlayerKillFlag 구독자에서 처리.
-    /// </summary>
-    // public void TriggerPlayerKillFlag()
-    // {
-    //     Debug.Log("🔥 [FlagHub] PlayerKillFlag TRIGGERED (죽음 플래그 발생)");
-    //     OnPlayerKillFlag?.Invoke();
-    // }
-
     public void TriggerPlayerKillFlag()
     {
-        Debug.Log("🔥 [FlagHub] PlayerKillFlag TRIGGERED (죽음 플래그 발생)");
-        
-        // 1. 혹시 모를 다른 구독자들을 위해 이벤트 유지
+        Debug.Log("🔥 [FlagHub] PlayerKillFlag TRIGGERED");
         OnPlayerKillFlag?.Invoke();
 
-        // 2. GameManager에게 직접 명령 (Direct Call)
         if (GameManager.Instance != null)
         {
-            Debug.Log("👉 [FlagHub] GameManager에게 Game Over 전환 요청 보냄");
-            GameManager.Instance.TriggerGameOver(); // -> 이게 SetState(GameOver)를 부름
-        }
-        else
-        {
-            Debug.LogError("❌ [FlagHub] GameManager Instance가 없습니다!");
+            GameManager.Instance.TriggerGameOver();
         }
     }
 }
