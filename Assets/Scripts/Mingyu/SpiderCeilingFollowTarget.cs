@@ -9,7 +9,6 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
         Land
     }
 
-
     [Header("Drop Rotate Settings")]
     public float dropRotateDuration = 0.3f;
 
@@ -39,12 +38,12 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
     public float ceilingCheckDistance = 0.8f;
     public float ceilingStickOffset = 0.05f;
 
-    [Header("Ground Settings (외부 호환용, 내부 로직 미사용)")]
-    public LayerMask groundLayer;       // 외부(Spawner 등) 참조 호환용
+    [Header("Ground Settings (외부 호환용)")]
+    public LayerMask groundLayer;      
 
     [Header("Drop Settings (외부 호환용)")]
     [Tooltip("이 수평 반경 안으로 들어오면 Drop 시작")]
-    public float dropHorizontalRadius = 1.0f; // MoveOnCeiling에서 드롭 시작 조건
+    public float dropHorizontalRadius = 1.0f; 
 
     [Header("Web Line Settings")]
     public LineRenderer webLine;
@@ -75,8 +74,8 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
 
     // Web / Drop 관련
     private bool isWebActive = false;
-    private Vector3 webStartPos;   // 라인렌더러 시작점(시각효과용)
-    private Vector3 dropOrigin;    // ★ 드롭 시작 위치(거리 판정 기준)
+    private Vector3 webStartPos;   
+    private Vector3 dropOrigin;    
 
     // Flag / 상태
     private bool isAlerted = false;
@@ -92,45 +91,22 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
 
     void OnEnable()
     {
-        hub = suin_FlagHub.instance;
-        if (hub != null)
-        {
-            hub.OnMoveSlightFlag += OnAlertFlag;
-            hub.OnPlayerSoundFlag += OnAlertFlag;
-            hub.OnWaterSoundFlag += OnAlertFlag;
-            hub.OnLightStateChanged += OnAlertFlag;
-        }
-    }
-
-    void OnDisable()
-    {
-        if (hub != null)
-        {
-            hub.OnMoveSlightFlag -= OnAlertFlag;
-            hub.OnPlayerSoundFlag -= OnAlertFlag;
-            hub.OnWaterSoundFlag -= OnAlertFlag;
-            hub.OnLightStateChanged -= OnAlertFlag;
-        }
-    }
-
-    void OnAlertFlag(bool v)
-    {
-        if (lockToTarget) return;
-
-        if (v)
-        {
-            if (isReturningHome)
-            {
-                Debug.Log("🕷️ [Spider] 복귀 중 인기척 감지! 다시 추격 모드 전환");
-                isReturningHome = false;
-            }
-            noFlagTimer = 0f;
-        }
-        isAlerted = v;
+        if (suin_FlagHub.instance != null) SubscribeToHub();
     }
 
     void Start()
     {
+        // 1. 구독 안전장치
+        if (hub == null && suin_FlagHub.instance != null) SubscribeToHub();
+
+        // 2. [핵심 수정] 시작하자마자 불이 켜져 있는지 확인
+        if (hub != null && hub.LightOn)
+        {
+            Debug.Log("🕷️ [Spider] 시작 시 불 켜짐 감지! 즉시 추격 모드.");
+            OnAlertFlag(true);
+        }
+
+        // 초기화 로직
         if (roofMesh == null)
         {
             GameObject foundRoof = GameObject.Find("Bedroom_roof");
@@ -150,6 +126,51 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
         wanderTimer = wanderDirChangeInterval;
     }
 
+    void SubscribeToHub()
+    {
+        hub = suin_FlagHub.instance;
+        hub.OnMoveSlightFlag += OnAlertFlag;
+        hub.OnPlayerSoundFlag += OnAlertFlag;
+        hub.OnWaterSoundFlag += OnAlertFlag;
+        hub.OnLightStateChanged += OnAlertFlag;
+    }
+
+    void OnDisable()
+    {
+        if (hub != null)
+        {
+            hub.OnMoveSlightFlag -= OnAlertFlag;
+            hub.OnPlayerSoundFlag -= OnAlertFlag;
+            hub.OnWaterSoundFlag -= OnAlertFlag;
+            hub.OnLightStateChanged -= OnAlertFlag;
+        }
+    }
+
+    // ==========================================
+    // 🔥 [핵심 수정] 신호 처리 로직
+    // ==========================================
+    void OnAlertFlag(bool v)
+    {
+        if (lockToTarget) return;
+
+        if (v)
+        {
+            // 신호가 켜짐 (True)
+            // 집에 가던 중이었어도 취소하고 다시 추격
+            if (isReturningHome)
+            {
+                Debug.Log("🕷️ [Spider] 복귀 중 인기척 감지! 다시 추격 모드 전환");
+                isReturningHome = false;
+                
+                // 만약 드롭하다가 집에 가려던 참이었다면 다시 천장 이동으로 초기화할 수도 있음
+                // 여기서는 상태 유지하되, Update에서 처리
+            }
+            noFlagTimer = 0f;
+        }
+        
+        isAlerted = v;
+    }
+
     void Update()
     {
         // Lock 상태면 항상 경계 유지
@@ -160,19 +181,29 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
         }
         else
         {
-            // 진정 타이머
-            noFlagTimer += Time.deltaTime;
-            if (!isReturningHome && noFlagTimer >= calmTimeout && spawnPoint != null)
+            // [핵심 수정] 경계 상태(isAlerted)가 아닐 때만 타이머가 흐릅니다.
+            // 불이 켜져 있는 동안(isAlerted == true)에는 타이머가 0으로 고정되어 집에 가지 않습니다.
+            if (!isAlerted && !isReturningHome)
             {
-                isReturningHome = true;
-                isAlerted = false;
+                noFlagTimer += Time.deltaTime;
+                if (noFlagTimer >= calmTimeout && spawnPoint != null)
+                {
+                    isReturningHome = true;
+                    isAlerted = false;
 
-                // 드롭 중이었다면 천장 이동으로 복귀
-                if (state == SpiderState.Drop) state = SpiderState.CeilingMove;
+                    // 드롭 중이었다면 천장 이동으로 복귀 (집에 가야 하니까)
+                    if (state == SpiderState.Drop) state = SpiderState.CeilingMove;
 
-                // 라인 비활성
-                if (webLine != null) { webLine.enabled = false; webLine.positionCount = 0; }
-                isWebActive = false;
+                    // 라인 비활성
+                    if (webLine != null) { webLine.enabled = false; webLine.positionCount = 0; }
+                    isWebActive = false;
+                    
+                    Debug.Log("🕷️ [Spider] 잠잠해져서 집으로 복귀합니다.");
+                }
+            }
+            else if (isAlerted)
+            {
+                noFlagTimer = 0f; // 경계 중이면 타이머 리셋
             }
         }
 
@@ -182,7 +213,7 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
                 MoveOnCeiling();
                 break;
             case SpiderState.Drop:
-                DropDown(); // ▶ 여기에서만 Game Over 판정
+                DropDown(); // 여기에서만 Game Over 판정
                 break;
             case SpiderState.Land:
                 // 게임오버 이후 대기
@@ -292,7 +323,7 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
     {
         if (roofMesh == null)
         {
-            Debug.LogWarning("거미: Roof Mesh가 없습니다! 배회 중지.");
+            // Debug.LogWarning("거미: Roof Mesh가 없습니다! 배회 중지.");
             MaintainCeilingAttachment();
             return;
         }
@@ -340,9 +371,7 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
         }
     }
 
-    // ─────────────────────────────────────────
     // 오직 "드롭 길이가 maxDropDistance 도달" 시에만 Game Over
-    // ─────────────────────────────────────────
     void DropDown()
     {
         float step = dropSpeed * Time.deltaTime;
@@ -379,7 +408,7 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
             if (!hasTriggeredGameOver && hub != null)
             {
                 hasTriggeredGameOver = true;
-                hub.TriggerPlayerKillFlag(); // ▶ 유일한 Game Over 트리거
+                hub.TriggerPlayerKillFlag(); // 유일한 Game Over 트리거
             }
             return;
         }
@@ -387,7 +416,7 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
         // 아직 최대 길이에 못 미치면 계속 하강
         transform.position = proposed;
 
-        // 라인렌더러 업데이트(시각효과)
+        // 라인렌더러 업데이트
         if (isWebActive && webLine != null)
         {
             webLine.SetPosition(0, webStartPos);
@@ -395,23 +424,19 @@ public class SpiderCeilingFollowTarget : MonoBehaviour
         }
     }
 
-    // 유틸리티: Y축 제거
     Vector3 GetXZ(Vector3 v) => new Vector3(v.x, 0, v.z);
 
-    // 외부에서 타겟 설정
     public void SetTarget(Transform target)
     {
         targetPoint = target;
     }
 
-    // 강제 타겟 고정 및 추적 시작
     public void ForceLockToTarget(Transform target)
     {
         targetPoint = target;
         lockToTarget = true;
         isAlerted = true;
         isReturningHome = false;
-
         Debug.Log("🕷️ [Spider] 강제 타겟 고정 (Kill Mode)");
     }
 
