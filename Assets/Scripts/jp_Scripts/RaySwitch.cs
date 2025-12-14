@@ -18,18 +18,14 @@ public class RaySwitch : MonoBehaviour
         Ray.gameObject.SetActive(true);
     }
 
-    void Awake()
-    {
-        Ray = transform.Find("Ray Interactor");
-    }
-
-    private void OnEnable()
+    public void Init() // This code prevents null exception error when GameManager calls RayOn()
+                       // before code below has found Ray Interactor and set Ray to it.
     {
         Ray = transform.Find("Ray Interactor");
     }
 
     void Update() // Added this code. The Ray Interactor turns on when grab button is pressed.
-                  // I think this is a bug with XR, not because of our development.
+                  // I think this is a bug with XR, not our development.
     {
         if (isGamePlaying)
         {
