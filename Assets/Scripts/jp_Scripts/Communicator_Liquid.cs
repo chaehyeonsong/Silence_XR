@@ -176,7 +176,7 @@ public class Communicator_Liquid : MonoBehaviour
         target_flask.FillInLiquid(0.00001f, Color.white, Color.white);
         target_flask.GetComponent<FlaskCollisionDetector>().Init(gameController);
         //for testing purposes only
-        target_flask.FillInLiquid(0.002f, target, target);
+        //target_flask.FillInLiquid(0.002f, target, target);
     }
 
     public void NowChecking()

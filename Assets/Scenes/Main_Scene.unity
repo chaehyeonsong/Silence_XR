@@ -7451,7 +7451,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8911159963713284639, guid: 0dadb0c3430e24599a35baaf93c7500b, type: 3}
       propertyPath: spawnInterval
-      value: 15
+      value: 35
       objectReference: {fileID: 0}
     - target: {fileID: 8911159963713284639, guid: 0dadb0c3430e24599a35baaf93c7500b, type: 3}
       propertyPath: spiderRoofMesh
@@ -17751,7 +17751,7 @@ MonoBehaviour:
     m_ConstantValue:
       m_PokeDirection: 5
       m_InteractionDepthOffset: 0.02
-      m_EnablePokeAngleThreshold: 1
+      m_EnablePokeAngleThreshold: 0
       m_PokeAngleThreshold: 60
     m_Variable: {fileID: 0}
 --- !u!33 &3408299745583565993
@@ -27603,7 +27603,7 @@ Transform:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 8592724508333917467}
   m_LocalRotation: {x: -0, y: -0.21225613, z: -0, w: 0.9772141}
-  m_LocalPosition: {x: 0.552, y: -0.07969999, z: -0.125}
+  m_LocalPosition: {x: 0.4739, y: -0.07969999, z: -0.1244}
   m_LocalScale: {x: 0.5, y: 0.5, z: 0.5}
   m_ConstrainProportionsScale: 1
   m_Children:
@@ -28262,7 +28262,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 0
+  m_IsActive: 1
 --- !u!114 &8468540298608868687
 MonoBehaviour:
   m_ObjectHideFlags: 0
