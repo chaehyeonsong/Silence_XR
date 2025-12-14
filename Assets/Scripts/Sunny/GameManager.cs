@@ -32,6 +32,8 @@ public class GameManager : MonoBehaviour
             return;
         }
         Instance = this;
+        LeftController.Init();
+        RightController.Init();
     }
 
     void Start()
@@ -47,6 +49,8 @@ public class GameManager : MonoBehaviour
         {
             Debug.LogWarning("[GameManager] suin_FlagHub 인스턴스를 찾을 수 없습니다.");
         }
+        LeftController.Init();
+        RightController.Init();
     }
 
     void OnDestroy()
