@@ -15197,7 +15197,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: dce90168c04b8a74bb8ce9bb7a4bff8a, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  speedlimit: 2.5
+  speedlimit: 3
   Initial_immune_time: 0
 --- !u!114 &6989558557700679876
 MonoBehaviour:
@@ -15211,7 +15211,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a59055d9bf614fd4fa6bb49b219b73be, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  breakVelocityThreshold: 2.5
+  breakVelocityThreshold: 3
   onlyBreakWhenReleased: 0
   intactVisual: {fileID: 0}
   shardsRoot: {fileID: 0}
