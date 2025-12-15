@@ -59,7 +59,7 @@ public class GameController : MonoBehaviour
     public InputActionReference leftSecondary;
     [HideInInspector]
     public LiquidControl MixingFlask;
-    [HideInInspector]
+    //[HideInInspector]
     public float flaskBreakDelay = 0f;
 
     private bool isGameRestarting = false;

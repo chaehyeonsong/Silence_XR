@@ -8,7 +8,7 @@ Material:
   m_PrefabInstance: {fileID: 0}
   m_PrefabAsset: {fileID: 0}
   m_Name: TestTube01_Water
-  m_Shader: {fileID: 4800000, guid: 6344b01e5384cb74b97e0c4160b8217f, type: 3}
+  m_Shader: {fileID: 4800000, guid: 9dd70a135498867479a3f0f4c4bd9039, type: 3}
   m_ValidKeywords: []
   m_InvalidKeywords: []
   m_LightmapFlags: 0

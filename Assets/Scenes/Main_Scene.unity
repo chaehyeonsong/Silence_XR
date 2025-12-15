@@ -16661,7 +16661,7 @@ MonoBehaviour:
   m_Move: {fileID: 6972639530819350904, guid: c348712bda248c246b8c49b3db54643f, type: 3}
   m_UIScroll: {fileID: 2464016903823916871, guid: c348712bda248c246b8c49b3db54643f, type: 3}
   m_SmoothMotionEnabled: 1
-  m_SmoothTurnEnabled: 0
+  m_SmoothTurnEnabled: 1
   m_UIScrollingEnabled: 1
   m_RayInteractorChanged:
     m_PersistentCalls:
@@ -16861,7 +16861,7 @@ MonoBehaviour:
   m_SnapTurn: {fileID: -8525429354371678379, guid: c348712bda248c246b8c49b3db54643f, type: 3}
   m_Move: {fileID: -8198699208435500284, guid: c348712bda248c246b8c49b3db54643f, type: 3}
   m_UIScroll: {fileID: -6756787485274679044, guid: c348712bda248c246b8c49b3db54643f, type: 3}
-  m_SmoothMotionEnabled: 0
+  m_SmoothMotionEnabled: 1
   m_SmoothTurnEnabled: 1
   m_UIScrollingEnabled: 1
   m_RayInteractorChanged:
@@ -17564,6 +17564,10 @@ PrefabInstance:
       propertyPath: XR_main_camera
       value: 
       objectReference: {fileID: 6175984803923343291}
+    - target: {fileID: 6208232713789183292, guid: e6972635dfe958546bb458a4cd9f57a0, type: 3}
+      propertyPath: flaskBreakDelay
+      value: 2
+      objectReference: {fileID: 0}
     - target: {fileID: 6208232713789183293, guid: e6972635dfe958546bb458a4cd9f57a0, type: 3}
       propertyPath: m_RootOrder
       value: 2
@@ -28264,7 +28268,7 @@ GameObject:
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
   m_StaticEditorFlags: 0
-  m_IsActive: 1
+  m_IsActive: 0
 --- !u!114 &8468540298608868687
 MonoBehaviour:
   m_ObjectHideFlags: 0
