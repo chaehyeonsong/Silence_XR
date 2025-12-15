@@ -39,16 +39,32 @@ public class PhysicalPokePressToggle : MonoBehaviour
             Debug.LogError($"❌ [PokeToggle] {name}에 Collider가 없습니다!");
     }
 
-    void OnEnable()
+    private void OnEnable()
     {
         if (_ix != null)
         {
             _ix.selectEntered.AddListener(OnInteract);
             _ix.hoverEntered.AddListener(OnInteract);
         }
+
+        if (suin_FlagHub.instance != null)
+        {
+            // 2. 내 설정(startOn)을 허브에 강제로 주입합니다. (초기화)
+            // 이렇게 하면 게임 시작 시점의 좀비 상태와 내 전등 상태가 100% 일치합니다.
+            _isOn = startOn;
+            suin_FlagHub.instance.ForceLightState(_isOn);
+        }
+        else
+        {
+            _isOn = startOn;
+            Debug.LogWarning("⚠️ [PokeToggle] FlagHub가 없습니다! 단독으로 작동합니다.");
+        }
+
+        // 3. 비주얼 적용
+        ApplyVisuals();
     }
 
-    void OnDisable()
+    private void OnDisable()
     {
         if (_ix != null)
         {

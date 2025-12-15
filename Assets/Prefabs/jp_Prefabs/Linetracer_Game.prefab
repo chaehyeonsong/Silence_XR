@@ -207,7 +207,7 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   flask_to_track: {fileID: 0}
   Linetracer: {fileID: 4150434787795106693}
-  speed: 4
+  speed: 7
   normal: {x: 0, y: 0, z: 0}
   prev_pos: {x: 0, y: 0, z: 0}
   rotated_normal: {x: 0, y: 0, z: 0}
