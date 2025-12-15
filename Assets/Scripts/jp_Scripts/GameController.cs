@@ -72,6 +72,7 @@ public class GameController : MonoBehaviour
         Destroy(liquid_checker);
         Destroy(liquid_puzzle);
         DestroyAllRemnants();
+        isGameRestarting = false;
 
         if (rightPrimary != null && rightPrimary.action != null)
         {
@@ -108,6 +109,7 @@ public class GameController : MonoBehaviour
         Destroy(liquid_checker);
         Destroy(liquid_puzzle);
         DestroyAllRemnants();
+        isGameRestarting = false;
 
         if (rightPrimary != null && rightPrimary.action != null)
         {
