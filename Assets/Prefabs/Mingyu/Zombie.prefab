@@ -2768,7 +2768,7 @@ MonoBehaviour:
   lockToTarget: 0
   chaseSpeedMultiplier: 2.5
   chaseSound: {fileID: 8300000, guid: 6b0b65b7f591d764ba82d1b216010b95, type: 3}
-  calmTimeout: 15
+  calmTimeout: 10
   targetPoint: {fileID: 0}
   arriveDistance: 0.35
   killTriggerDistance: 1.5
